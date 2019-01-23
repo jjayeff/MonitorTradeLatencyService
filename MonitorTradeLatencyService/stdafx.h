@@ -10,7 +10,10 @@
 #include <windows.h>
 #include <string>
 #include <tchar.h>
+#include <iterator> 
+#include <filesystem>
 
 #include "winconfig/winconfig.h"
 
 using namespace std;
+namespace fs = experimental::filesystem;
