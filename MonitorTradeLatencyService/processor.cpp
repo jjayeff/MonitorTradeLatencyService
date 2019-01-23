@@ -128,17 +128,15 @@ int Processor::WriteFile() {
 //+------------------------------------------------------------------+
 string Processor::DiffTime(string time1, string time2) {
 	time_t tStart;
-	int ymd1, hh1, mm1, ss1, mss1, ymd2, hh2, mm2, ss2, mss2;
+	int ymd1, hh1, mm1, ymd2, hh2, mm2;
+	float ss1, ss2;
 	const char *start_time = time1.c_str();
 	const char *end_time = time2.c_str();
 
-	sscanf(start_time, "%d-%d:%d:%d.%d", &ymd1, &hh1, &mm1, &ss1, &mss1);
-	sscanf(end_time, "%d-%d:%d:%d.%d", &ymd2, &hh2, &mm2, &ss2, &mss2);
+	sscanf(start_time, "%d-%d:%d:%f", &ymd1, &hh1, &mm1, &ss1);
+	sscanf(end_time, "%d-%d:%d:%f", &ymd2, &hh2, &mm2, &ss2);
 
-	string start = to_string(ss1) + "." + to_string(mss1);
-	string end = to_string(ss2) + "." + to_string(mss2);
-
-	return to_string(stof(end) - stof(start));
+	return to_string(ss2 - ss1);
 }
 //+------------------------------------------------------------------+
 //| Other Function                                                   |

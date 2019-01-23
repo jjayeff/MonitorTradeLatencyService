@@ -36,6 +36,7 @@ int _tmain(int argc, TCHAR *argv[])
 	config.setValue("Application", "LogPath", log_path);
 	config.setValue("Application", "FilePath", log_path);
 	config.setValue("Application", "ResultPath", log_path);
+	config.setValue("Application", "Diff", "1");
 
 	processor.file_path = config.getValueString("Application", "FilePath");
 	processor.result_path = config.getValueString("Application", "ResultPath");
@@ -43,16 +44,17 @@ int _tmain(int argc, TCHAR *argv[])
 	processor.key_back_name = config.getValueString("Application", "KeyBackName");
 	processor.front_name = config.getValueString("Application", "FrontName");
 	processor.back_name = config.getValueString("Application", "BackName");
+	processor.diff = config.getValueInt("Application", "Diff");
 	// init log
 	processor.vnLog.InitialLog(config.getValueString("Application", "LogPath"), "MonitorTradeLatencyService", 10, true);
 
 	//----------------------------------------------------------------------
-	while (1) {
+	/*while (1) {
 		processor.Run();
 		Sleep(1000);
-	}
+	}*/
 
-	/*SERVICE_TABLE_ENTRY ServiceTable[] =
+	SERVICE_TABLE_ENTRY ServiceTable[] =
 	{
 		{SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain},
 		{NULL, NULL}
@@ -61,7 +63,7 @@ int _tmain(int argc, TCHAR *argv[])
 	if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
 	{
 		return GetLastError();
-	}*/
+	}
 
 	return 0;
 }

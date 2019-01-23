@@ -40,6 +40,7 @@ public:
 	string				key_back_name = "";
 	string				file_path = "";
 	string				result_path = "";
+	int					diff = 0;
 	int					file_in_line = 0;
 	int					file_out_line = 0;
 
