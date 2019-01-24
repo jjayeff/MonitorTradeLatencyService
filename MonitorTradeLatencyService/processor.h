@@ -41,6 +41,7 @@ public:
 	string				file_path = "";
 	string				result_path = "";
 	int					diff = 0;
+	int					deley = 0;
 	int					file_in_line = 0;
 	int					file_out_line = 0;
 

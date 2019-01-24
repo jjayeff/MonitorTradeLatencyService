@@ -100,7 +100,7 @@ int Processor::WriteFile() {
 		time_t t = time(0);   // get time now
 		tm* now = localtime(&t);
 		string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
-		ofstream mywrite(result_path + "MTLS-" + date + ".txt");
+		ofstream mywrite(result_path + "MonitorTradeLatencyService-" + date + ".csv");
 
 		for (int i = 0; i < out_file.size(); i++)
 			for (int j = 0; j < in_file.size(); j++)
@@ -117,8 +117,66 @@ int Processor::WriteFile() {
 					break;
 				}
 
-		for (int i = 0; i < data.size(); i++)
-			mywrite << data[i].account << "," << data[i].group << "," << data[i].id << "," << data[i].diftime << "\n";
+		float sum = 0;
+		vector<string>groups;
+		vector<string>accounts;
+		mywrite << "Account,Groups,ClOrdID,DiffTime" << "\n";
+		for (int i = 0; i < data.size(); i++) {
+			if (diff < stof(data[i].diftime)) {
+				LOGW << "Diff: " << data[i].account << "," << data[i].group << "," << data[i].id << "," << data[i].diftime;
+				return 1;
+			}
+			sum += stof(data[i].diftime);
+			mywrite << data[i].account << "," << data[i].group << "," << data[i].id << "," << data[i].diftime << "," << "\n";
+
+			if(groups.size() == 0)
+				groups.push_back(data[i].group);
+			if (accounts.size() == 0)
+				accounts.push_back(data[i].account);
+
+			for (int j = 0; j < groups.size(); j++)
+				if (data[i].group == groups[j])
+					break;
+				else if (j + 1 == groups.size())
+					groups.push_back(data[i].group);
+
+			for (int j = 0; j < accounts.size(); j++)
+				if (data[i].account == accounts[j])
+					break;
+				else if (j + 1 == accounts.size())
+					accounts.push_back(data[i].account);
+		}
+
+		// Average of all 
+		mywrite << "\nAverage: " << sum / data.size() << "\n";
+
+		// Average by group 
+		for (int i = 0; i < groups.size(); i++) {
+			float sum = 0;
+			int count = 0;
+			for (int j = 0; j < data.size(); j++) {
+				if (groups[i] == data[j].group) {
+					sum += stof(data[j].diftime);
+					count++;
+				}
+			}
+			mywrite << "Average(" << groups[i] << "): " << sum / count << "\n";
+		}	
+
+		// Average by account 
+		for (int i = 0; i < accounts.size(); i++) {
+			float sum = 0;
+			int count = 0;
+			for (int j = 0; j < data.size(); j++) {
+				if (accounts[i] == data[j].account) {
+					sum += stof(data[j].diftime);
+					count++;
+				}
+			}
+			mywrite << "Average(" << accounts[i] << "): " << sum / count << "\n";
+		}
+
+		mywrite.close();
 
 		return 0;
 	}
@@ -141,10 +199,6 @@ string Processor::DiffTime(string time1, string time2) {
 //+------------------------------------------------------------------+
 //| Other Function                                                   |
 //+------------------------------------------------------------------+
-void Processor::writeConfig(LPCTSTR path, LPCTSTR key, string value) {
-	LPCTSTR result = value.c_str();
-	WritePrivateProfileString(_T("Application"), key, result, path);
-}
 int Processor::SetFrontBackName() {
 	string path = file_path;
 	string real_path = path;
@@ -202,8 +256,6 @@ int Processor::SetFrontBackName() {
 	int index_back = FindField(real_path, cstr_back_name);
 	front_name = real_path.substr(index_front, index_back - index_front - 1);
 	back_name = real_path.substr(index_back, real_path.size());
-	writeConfig(".\\MonitorTradeLatencyService.ini", "FrontName", real_path.substr(index_front, index_back - index_front - 1));
-	writeConfig(".\\MonitorTradeLatencyService.ini", "BackName", real_path.substr(index_back, real_path.size()));
 
 	return 0;
 }

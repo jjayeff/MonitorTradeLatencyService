@@ -28,33 +28,33 @@ int _tmain(int argc, TCHAR *argv[])
 	config.setConfig("MonitorTradeLatencyService.ini");
 	string appPath = config.getAbsolutePath();
 	string log_path = appPath + "logs";
+	string result_path = appPath + "results\\";
+	CreateDirectory("results", NULL);
 
-	config.setValue("Application", "FrontName", "D0118__FIX__MD1");
-	config.setValue("Application", "BackName", "SET_1901140211232301");
 	config.setValue("Application", "KeyFrontName", "D0118__FIX__MD1");
 	config.setValue("Application", "KeyBackName", "SET");
 	config.setValue("Application", "LogPath", log_path);
 	config.setValue("Application", "FilePath", log_path);
-	config.setValue("Application", "ResultPath", log_path);
+	config.setValue("Application", "ResultPath", result_path);
 	config.setValue("Application", "Diff", "1");
+	config.setValue("Application", "Deley", "10");
 
 	processor.file_path = config.getValueString("Application", "FilePath");
 	processor.result_path = config.getValueString("Application", "ResultPath");
 	processor.key_front_name = config.getValueString("Application", "KeyFrontName");
 	processor.key_back_name = config.getValueString("Application", "KeyBackName");
-	processor.front_name = config.getValueString("Application", "FrontName");
-	processor.back_name = config.getValueString("Application", "BackName");
 	processor.diff = config.getValueInt("Application", "Diff");
+	processor.deley = config.getValueInt("Application", "Deley");
 	// init log
 	processor.vnLog.InitialLog(config.getValueString("Application", "LogPath"), "MonitorTradeLatencyService", 10, true);
 
 	//----------------------------------------------------------------------
-	/*while (1) {
+	while (1) {
 		processor.Run();
-		Sleep(1000);
-	}*/
+		Sleep(processor.deley * 1000);
+	}
 
-	SERVICE_TABLE_ENTRY ServiceTable[] =
+	/*SERVICE_TABLE_ENTRY ServiceTable[] =
 	{
 		{SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain},
 		{NULL, NULL}
@@ -63,7 +63,7 @@ int _tmain(int argc, TCHAR *argv[])
 	if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
 	{
 		return GetLastError();
-	}
+	}*/
 
 	return 0;
 }
@@ -211,7 +211,7 @@ DWORD WINAPI ServiceWorkerThread(LPVOID lpParam)
 		while (WaitForSingleObject(g_ServiceStopEvent, 0) != WAIT_OBJECT_0)
 		{
 			processor.Run();
-			Sleep(1000);
+			Sleep(processor.deley * 1000);
 		}
 
 	}
