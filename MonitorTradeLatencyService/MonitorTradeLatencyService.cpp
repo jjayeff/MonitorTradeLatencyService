@@ -49,12 +49,12 @@ int _tmain(int argc, TCHAR *argv[])
 	processor.vnLog.InitialLog(config.getValueString("Application", "LogPath"), "MonitorTradeLatencyService", 10, true);
 
 	//----------------------------------------------------------------------
-	while (1) {
+	/*while (1) {
 		processor.Run();
 		Sleep(processor.deley * 1000);
-	}
+	}*/
 
-	/*SERVICE_TABLE_ENTRY ServiceTable[] =
+	SERVICE_TABLE_ENTRY ServiceTable[] =
 	{
 		{SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain},
 		{NULL, NULL}
@@ -63,7 +63,7 @@ int _tmain(int argc, TCHAR *argv[])
 	if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
 	{
 		return GetLastError();
-	}*/
+	}
 
 	return 0;
 }

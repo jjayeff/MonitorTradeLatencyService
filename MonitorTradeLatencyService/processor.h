@@ -13,6 +13,7 @@ public:
 	{
 		string				id = "";						// 11= ClOrdID 
 		string				time = "";						// Run time
+		string				msg_type = "";
 		string				account = "";
 		string				group = "";
 		bool				check = false;
@@ -53,7 +54,7 @@ public:
 	int					FindField(string line, char* input);
 	int					WriteFile();
 	string				DiffTime(string time1, string time2);
-	void				writeConfig(LPCTSTR path, LPCTSTR key, string value);
+	string				Diff2String(float time);
 	int					SetFrontBackName();
 
 private:

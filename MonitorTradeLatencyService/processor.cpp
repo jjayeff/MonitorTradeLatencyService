@@ -51,19 +51,32 @@ int Processor::ReadFile(string input) {
 			if (!input.compare(input.size() - 3, 3, ".in")) {
 				if (FindField(line, "35=8") > -1 && count > file_in_line) {
 					FileIn tmp;
-					tmp.id = line.substr(FindField(line, "11=") + 3, FindField(line, "453=") - FindField(line, "11=") - 4);
+					tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 					tmp.time = line.substr(0, FindField(line, "8=") - 3);
-					in_file.push_back(tmp);
+					for (int i = 0; i < in_file.size(); i++)
+						if (in_file[i].id == tmp.id) {
+							in_file[i].time = tmp.time;
+							break;
+						}
+						else if (i + 1 == in_file.size()) {
+							in_file.push_back(tmp);
+						}
+					if (in_file.size() == 0)
+						in_file.push_back(tmp);
 					file_in_line = count;
 				}
 			}
 			else {
-				if (FindField(line, "35=D") > -1 && count > file_out_line) {
+				if ((FindField(line, "35=D") > -1 || FindField(line, "35=F") > -1 || FindField(line, "35=G") > -1) && count > file_out_line) {
 					FileOut tmp;
-					tmp.id = line.substr(FindField(line, "11=") + 3, FindField(line, "453=") - FindField(line, "11=") - 4);
+					tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 					tmp.time = line.substr(0, FindField(line, "8=") - 3);
-					tmp.account = line.substr(FindField(line, "452=") + 9, FindField(line, "581=") - FindField(line, "452=") - 10);
+					if (FindField(line, "35=D") > -1)
+						tmp.account = line.substr(FindField(line, "452=") + 9, FindField(line, "581=") - FindField(line, "452=") - 10);
+					else
+						tmp.account = line.substr(FindField(line, "11=") + 26, FindField(line, "581=") - FindField(line, "11=") - 27);
 					tmp.group = line.substr(FindField(line, "50001=") + 6, FindField(line, "50002=") - FindField(line, "50001=") - 7);
+					tmp.msg_type = line.substr(FindField(line, "35=") + 3, 1);
 					out_file.push_back(tmp);
 					file_out_line = count;
 				}
@@ -113,7 +126,11 @@ int Processor::WriteFile() {
 					data.push_back(tmp);
 					in_file[j].check = true;
 					out_file[i].check = true;
-					LOGI << "Success Data: " << tmp.id << " | Difftime: " << tmp.diftime;
+					if (diff * 60 < stof(tmp.diftime)) {
+						LOGW << "Diff Over: " << tmp.id << " | Difftime: " << tmp.diftime;
+					}
+					else
+						LOGI << "Success Data: " << tmp.id << " | Difftime: " << tmp.diftime;
 					break;
 				}
 
@@ -122,14 +139,10 @@ int Processor::WriteFile() {
 		vector<string>accounts;
 		mywrite << "Account,Groups,ClOrdID,DiffTime" << "\n";
 		for (int i = 0; i < data.size(); i++) {
-			if (diff < stof(data[i].diftime)) {
-				LOGW << "Diff: " << data[i].account << "," << data[i].group << "," << data[i].id << "," << data[i].diftime;
-				return 1;
-			}
 			sum += stof(data[i].diftime);
-			mywrite << data[i].account << "," << data[i].group << "," << data[i].id << "," << data[i].diftime << "," << "\n";
+			mywrite << data[i].account << "," << data[i].group << "," << data[i].id << "," << Diff2String(stof(data[i].diftime)) << "," << "\n";
 
-			if(groups.size() == 0)
+			if (groups.size() == 0)
 				groups.push_back(data[i].group);
 			if (accounts.size() == 0)
 				accounts.push_back(data[i].account);
@@ -147,10 +160,11 @@ int Processor::WriteFile() {
 					accounts.push_back(data[i].account);
 		}
 
-		// Average of all 
-		mywrite << "\nAverage: " << sum / data.size() << "\n";
+		// Average of all
+		mywrite << "\nAverage: " << Diff2String(sum / data.size()) << "\n";
+		mywrite << "\n";
 
-		// Average by group 
+		// Average by group
 		for (int i = 0; i < groups.size(); i++) {
 			float sum = 0;
 			int count = 0;
@@ -160,10 +174,11 @@ int Processor::WriteFile() {
 					count++;
 				}
 			}
-			mywrite << "Average(" << groups[i] << "): " << sum / count << "\n";
-		}	
+			mywrite << "Average(" << groups[i] << "): " << Diff2String(sum / count) << "\n";
+		}
+		mywrite << "\n";
 
-		// Average by account 
+		// Average by account
 		for (int i = 0; i < accounts.size(); i++) {
 			float sum = 0;
 			int count = 0;
@@ -173,7 +188,7 @@ int Processor::WriteFile() {
 					count++;
 				}
 			}
-			mywrite << "Average(" << accounts[i] << "): " << sum / count << "\n";
+			mywrite << "Average(" << accounts[i] << "): " << Diff2String(sum / count) << "\n";
 		}
 
 		mywrite.close();
@@ -193,8 +208,30 @@ string Processor::DiffTime(string time1, string time2) {
 
 	sscanf(start_time, "%d-%d:%d:%f", &ymd1, &hh1, &mm1, &ss1);
 	sscanf(end_time, "%d-%d:%d:%f", &ymd2, &hh2, &mm2, &ss2);
-
-	return to_string(ss2 - ss1);
+	float strat = hh1 * 60 * 60 + mm1 * 60 + ss1;
+	float end = hh2 * 60 * 60 + mm2 * 60 + ss2;
+	return to_string(end - strat);
+}
+//+------------------------------------------------------------------+
+//| Diff to String                                                   |
+//+------------------------------------------------------------------+
+string Processor::Diff2String(float difftime) {
+	string tmp = "";
+	if (difftime > 3600) {
+		tmp += to_string((int)difftime / 3600) + ":";
+		difftime -= (3600 * ((int)difftime / 3600));
+	}
+	else
+		tmp += "00:";
+	if (difftime > 60) {
+		tmp += to_string((int)difftime / 60) + ":";
+		difftime -= (60 * ((int)difftime / 60));
+	}
+	else
+		tmp += "00:";
+	if (difftime < 60)
+		tmp += to_string(difftime);
+	return tmp;
 }
 //+------------------------------------------------------------------+
 //| Other Function                                                   |
