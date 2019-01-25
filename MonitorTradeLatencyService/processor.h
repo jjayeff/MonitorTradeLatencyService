@@ -16,13 +16,11 @@ public:
 		string				msg_type = "";
 		string				account = "";
 		string				group = "";
-		bool				check = false;
 	};
 	struct FileIn
 	{
 		string				id = "";						// 11= ClOrdID 
 		string				time = "";						// Run time
-		bool				check = false;
 	};
 	struct Data
 	{
@@ -30,10 +28,10 @@ public:
 		string				diftime = "";					// different time
 		string				account = "";
 		string				group = "";
+		string				msg_type = "";
 	};
 	vector<FileOut>		out_file;
 	vector<FileIn>		in_file;
-	vector<Data>		data;
 	LogClass			vnLog;
 	string				front_name = "";
 	string				back_name = "";

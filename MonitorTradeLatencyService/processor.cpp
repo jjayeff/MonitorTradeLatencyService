@@ -17,22 +17,21 @@ Processor::~Processor() {
 //| Run Program                                                      |
 //+------------------------------------------------------------------+
 int Processor::Run() {
-	if (SetFrontBackName())
-		return 1;
+	if (!SetFrontBackName()) {
+		string file = file_path + front_name + "-" + back_name;
+		LOGI << "Read file name: " + front_name + "-" + back_name;
+		string read_in_file = file + ".in";
+		string read_out_file = file + ".out";
 
-	string file = file_path + front_name + "-" + back_name;
-	LOGI << "Read file name: " + front_name + "-" + back_name;
-	string in_file = file + ".in";
-	string out_file = file + ".out";
+		// Read file .in .out get value
+		if (ReadFile(read_out_file))
+			return 1;
+		if (ReadFile(read_in_file))
+			return 1;
+		if (WriteFile())
+			return 1;
 
-	// Read file .in .out get value
-	if (ReadFile(out_file))
-		return 1;
-	if (ReadFile(in_file))
-		return 1;
-
-	if (WriteFile())
-		return 1;
+	}
 
 	return 0;
 }
@@ -47,9 +46,9 @@ int Processor::ReadFile(string input) {
 	if (myfile.is_open()) {
 		int count = 0;
 		while (myfile.eof() == false) {
-			getline(myfile, line);
+			getline(myfile, line); 
 			if (!input.compare(input.size() - 3, 3, ".in")) {
-				if (FindField(line, "35=8") > -1 && count > file_in_line) {
+				if (FindField(line, "35=8") > -1 && count > file_in_line ) {
 					FileIn tmp;
 					tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 					tmp.time = line.substr(0, FindField(line, "8=") - 3);
@@ -71,10 +70,18 @@ int Processor::ReadFile(string input) {
 					FileOut tmp;
 					tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 					tmp.time = line.substr(0, FindField(line, "8=") - 3);
-					if (FindField(line, "35=D") > -1)
-						tmp.account = line.substr(FindField(line, "452=") + 9, FindField(line, "581=") - FindField(line, "452=") - 10);
-					else
-						tmp.account = line.substr(FindField(line, "11=") + 26, FindField(line, "581=") - FindField(line, "11=") - 27);
+					if (FindField(line, "35=D") > -1) {
+						if (FindField(line, "452=") > -1)
+							tmp.account = line.substr(FindField(line, "452=") + 9, FindField(line, "581=") - FindField(line, "452=") - 10);
+						else
+							tmp.account = "NONE";
+					}
+					else {
+						if (FindField(line, "11=") > -1)
+							tmp.account = line.substr(FindField(line, "11=") + 26, FindField(line, "581=") - FindField(line, "11=") - 27);
+						else
+							tmp.account = "NONE";
+					}
 					tmp.group = line.substr(FindField(line, "50001=") + 6, FindField(line, "50002=") - FindField(line, "50001=") - 7);
 					tmp.msg_type = line.substr(FindField(line, "35=") + 3, 1);
 					out_file.push_back(tmp);
@@ -113,34 +120,33 @@ int Processor::WriteFile() {
 		time_t t = time(0);   // get time now
 		tm* now = localtime(&t);
 		string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
-		ofstream mywrite(result_path + "MonitorTradeLatencyService-" + date + ".csv");
+		ofstream mywrite(result_path + "MonitorTradeLatencyService-" + date + ".csv", std::ofstream::out | std::ofstream::app);
 
 		for (int i = 0; i < out_file.size(); i++)
 			for (int j = 0; j < in_file.size(); j++)
-				if (out_file[i].id == in_file[j].id && !out_file[i].check && !in_file[j].check) {
+				if (out_file[i].id == in_file[j].id) {
 					Data tmp;
 					tmp.id = out_file[i].id;
 					tmp.diftime = DiffTime(out_file[i].time, in_file[j].time);
 					tmp.account = out_file[i].account;
 					tmp.group = out_file[i].group;
-					data.push_back(tmp);
-					in_file[j].check = true;
-					out_file[i].check = true;
+					tmp.msg_type = out_file[i].msg_type;
+					mywrite << tmp.account << "," << tmp.group << "," << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << tmp.msg_type << "," << "\n";
 					if (diff * 60 < stof(tmp.diftime)) {
 						LOGW << "Diff Over: " << tmp.id << " | Difftime: " << tmp.diftime;
 					}
 					else
 						LOGI << "Success Data: " << tmp.id << " | Difftime: " << tmp.diftime;
+					out_file.erase(out_file.begin() + i--);
+					in_file.erase(in_file.begin() + j);
 					break;
 				}
 
-		float sum = 0;
+		/*float sum = 0;
 		vector<string>groups;
 		vector<string>accounts;
-		mywrite << "Account,Groups,ClOrdID,DiffTime" << "\n";
 		for (int i = 0; i < data.size(); i++) {
 			sum += stof(data[i].diftime);
-			mywrite << data[i].account << "," << data[i].group << "," << data[i].id << "," << Diff2String(stof(data[i].diftime)) << "," << "\n";
 
 			if (groups.size() == 0)
 				groups.push_back(data[i].group);
@@ -189,7 +195,7 @@ int Processor::WriteFile() {
 				}
 			}
 			mywrite << "Average(" << accounts[i] << "): " << Diff2String(sum / count) << "\n";
-		}
+		}*/
 
 		mywrite.close();
 
@@ -284,7 +290,7 @@ int Processor::SetFrontBackName() {
 			}
 		}
 	}
-	if (real_path == "./") {
+	if (real_path == path) {
 		LOGE << "Cannot find file please set key front and back name";
 		return 1;
 	}

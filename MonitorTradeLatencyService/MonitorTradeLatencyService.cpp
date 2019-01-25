@@ -37,7 +37,7 @@ int _tmain(int argc, TCHAR *argv[])
 	config.setValue("Application", "FilePath", log_path);
 	config.setValue("Application", "ResultPath", result_path);
 	config.setValue("Application", "Diff", "1");
-	config.setValue("Application", "Deley", "10");
+	config.setValue("Application", "Deley", "300");
 
 	processor.file_path = config.getValueString("Application", "FilePath");
 	processor.result_path = config.getValueString("Application", "ResultPath");
@@ -49,12 +49,19 @@ int _tmain(int argc, TCHAR *argv[])
 	processor.vnLog.InitialLog(config.getValueString("Application", "LogPath"), "MonitorTradeLatencyService", 10, true);
 
 	//----------------------------------------------------------------------
-	/*while (1) {
+	time_t t = time(0);   // get time now
+	tm* now = localtime(&t);
+	string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
+	ofstream mywrite(result_path + "MonitorTradeLatencyService-" + date + ".csv");
+	mywrite << "Account,Groups,ClOrdID,DiffTime" << "\n";
+	mywrite.close();
+
+	while (1) {
 		processor.Run();
 		Sleep(processor.deley * 1000);
-	}*/
+	}
 
-	SERVICE_TABLE_ENTRY ServiceTable[] =
+	/*SERVICE_TABLE_ENTRY ServiceTable[] =
 	{
 		{SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain},
 		{NULL, NULL}
@@ -63,7 +70,7 @@ int _tmain(int argc, TCHAR *argv[])
 	if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
 	{
 		return GetLastError();
-	}
+	}*/
 
 	return 0;
 }
