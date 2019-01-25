@@ -327,7 +327,7 @@ int Processor::SetFrontBackName() {
 		}
 	}
 	if (real_path == path) {
-		LOGE << "Cannot find file please set key front and back name";
+		LOGW << "Cannot find file please set key front and back name";
 		return 1;
 	}
 
