@@ -52,8 +52,7 @@ int _tmain(int argc, TCHAR *argv[])
 	time_t t = time(0);   // get time now
 	tm* now = localtime(&t);
 	string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
-	ofstream mywrite(result_path + "MonitorTradeLatencyService-" + date + ".csv");
-	mywrite << "Account,Groups,ClOrdID,DiffTime" << "\n";
+	ofstream mywrite(result_path + "MonitorTradeLatencyService_" + date + ".csv");
 	mywrite.close();
 
 	while (1) {

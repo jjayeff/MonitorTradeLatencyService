@@ -32,6 +32,7 @@ public:
 	};
 	vector<FileOut>		out_file;
 	vector<FileIn>		in_file;
+	vector<Data>		data;
 	LogClass			vnLog;
 	string				front_name = "";
 	string				back_name = "";
@@ -51,8 +52,9 @@ public:
 	int					ReadFile(string input);
 	int					FindField(string line, char* input);
 	int					WriteFile();
+	int					WriteAverageFile();
 	string				DiffTime(string time1, string time2);
-	string				Diff2String(float time);
+	string				Diff2String(double time);
 	int					SetFrontBackName();
 
 private:
