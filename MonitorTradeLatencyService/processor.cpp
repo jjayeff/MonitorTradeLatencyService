@@ -52,7 +52,7 @@ int Processor::ReadFile(string input) {
 		while (myfile.eof() == false) {
 			getline(myfile, line);
 			if (!input.compare(input.size() - 3, 3, ".in")) {
-				if (FindField(line, "35=8") > -1 && count > file_in_line) {
+				if (FindField(line, "35=8") > -1 && count > file_in_line && FindField(line, "150=4") < 0) {
 					FileIn tmp;
 					tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 					tmp.time = line.substr(0, FindField(line, "8=") - 3);
