@@ -174,7 +174,7 @@ int Processor::WriteAverageFile() {
 		}
 	}
 
-	double sum = 0;
+	float sum = 0;
 	vector<string>groups;
 	vector<string>accounts;
 	for (int i = 0; i < data.size(); i++) {
@@ -205,7 +205,7 @@ int Processor::WriteAverageFile() {
 	// Average by group
 	mywrite << "\n========================= Group Average =========================" << "\n";
 	for (int i = 0; i < groups.size(); i++) {
-		double sum = 0;
+		float sum = 0;
 		int count = 0;
 		for (int j = 0; j < data.size(); j++) {
 			if (groups[i] == data[j].group) {
@@ -219,7 +219,7 @@ int Processor::WriteAverageFile() {
 	// Average by account
 	mywrite << "\n======================== Account Average ========================" << "\n";
 	for (int i = 0; i < accounts.size(); i++) {
-		double sum = 0;
+		float sum = 0;
 		int count = 0;
 		for (int j = 0; j < data.size(); j++) {
 			if (accounts[i] == data[j].account) {
@@ -250,14 +250,14 @@ string Processor::DiffTime(string time1, string time2) {
 
 	sscanf(start_time, "%d-%d:%d:%f", &ymd1, &hh1, &mm1, &ss1);
 	sscanf(end_time, "%d-%d:%d:%f", &ymd2, &hh2, &mm2, &ss2);
-	double strat = hh1 * 60 * 60 + mm1 * 60 + ss1;
-	double end = hh2 * 60 * 60 + mm2 * 60 + ss2;
+	float strat = hh1 * 60 * 60 + mm1 * 60 + ss1;
+	float end = hh2 * 60 * 60 + mm2 * 60 + ss2;
 	return to_string(end - strat);
 }
 //+------------------------------------------------------------------+
 //| Diff to String                                                   |
 //+------------------------------------------------------------------+
-string Processor::Diff2String(double difftime) {
+string Processor::Diff2String(float difftime) {
 	string tmp = "";
 	if (difftime > 3600) {
 		tmp += to_string((int)difftime / 3600) + ":";

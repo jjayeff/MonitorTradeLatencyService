@@ -54,7 +54,7 @@ public:
 	int					WriteFile();
 	int					WriteAverageFile();
 	string				DiffTime(string time1, string time2);
-	string				Diff2String(double time);
+	string				Diff2String(float time);
 	int					SetFrontBackName();
 
 private:
