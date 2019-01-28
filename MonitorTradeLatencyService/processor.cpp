@@ -52,13 +52,12 @@ int Processor::ReadFile(string input) {
 		while (myfile.eof() == false) {
 			getline(myfile, line);
 			if (!input.compare(input.size() - 3, 3, ".in")) {
-				if (FindField(line, "35=8") > -1 && count > file_in_line && FindField(line, "150=4") < 0) {
+				if (FindField(line, "35=8") > -1 && count > file_in_line && FindField(line, "150=0") > -1) {
 					FileIn tmp;
 					tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 					tmp.time = line.substr(0, FindField(line, "8=") - 3);
 					for (int i = 0; i < in_file.size(); i++)
 						if (in_file[i].id == tmp.id) {
-							in_file[i].time = tmp.time;
 							break;
 						}
 						else if (i + 1 == in_file.size()) {
@@ -333,7 +332,7 @@ int Processor::SetFrontBackName() {
 
 	int index_front = FindField(real_path, cstr_front_name);
 	int index_back = FindField(real_path, cstr_back_name);
-	front_name = real_path.substr(index_front, index_back - index_front - 1);
+	front_name = real_path.substr(index_front, key_front_name.length());
 	back_name = real_path.substr(index_back, real_path.size());
 
 	return 0;
