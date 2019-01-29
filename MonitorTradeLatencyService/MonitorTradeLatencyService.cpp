@@ -38,6 +38,7 @@ int _tmain(int argc, TCHAR *argv[])
 	config.setValue("Application", "ResultPath", result_path);
 	config.setValue("Application", "Diff", "1");
 	config.setValue("Application", "Deley", "300");
+	config.setValue("Application", "Account", "D0013__FIX__CU3, D0019__FIX__CU2, D0025__FIX__CU3, D0032__FIX__CU3, D0034__FIX__CU5, D0060__FIX__CU2, D0063__FIX__CU2,");
 
 	processor.file_path = config.getValueString("Application", "FilePath");
 	processor.result_path = config.getValueString("Application", "ResultPath");
@@ -45,6 +46,7 @@ int _tmain(int argc, TCHAR *argv[])
 	processor.key_back_name = config.getValueString("Application", "KeyBackName");
 	processor.diff = config.getValueInt("Application", "Diff");
 	processor.deley = config.getValueInt("Application", "Deley");
+	processor.CutString(config.getValueString("Application", "Account"));
 	// init log
 	processor.vnLog.InitialLog(config.getValueString("Application", "LogPath"), "MonitorTradeLatencyService", 10, true);
 
@@ -53,7 +55,9 @@ int _tmain(int argc, TCHAR *argv[])
 	tm* now = localtime(&t);
 	string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
 	ofstream mywrite(result_path + "MonitorTradeLatencyService_" + date + ".csv");
+	ofstream mywrite1(result_path + "MonitorTradeLatencyService-Sub_" + date + ".csv");
 	mywrite.close();
+	mywrite1.close();
 
 	while (1) {
 		processor.Run();
