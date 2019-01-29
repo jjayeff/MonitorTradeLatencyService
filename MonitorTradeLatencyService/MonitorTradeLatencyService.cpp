@@ -38,7 +38,7 @@ int _tmain(int argc, TCHAR *argv[])
 	config.setValue("Application", "ResultPath", result_path);
 	config.setValue("Application", "Diff", "1");
 	config.setValue("Application", "Deley", "300");
-	config.setValue("Application", "Account", "D0013__FIX__CU3, D0019__FIX__CU2, D0025__FIX__CU3, D0032__FIX__CU3, D0034__FIX__CU5, D0060__FIX__CU2, D0063__FIX__CU2,");
+	config.setValue("Application", "Account", "D0013__FIX__CU3, D0019__FIX__CU2, D0025__FIX__CU3, D0032__FIX__CU3, D0034__FIX__CU5, D0060__FIX__CU2, D0063__FIX__CU2, D0117__FIX__CU1, D0118__FIX__CU1,");
 
 	processor.file_path = config.getValueString("Application", "FilePath");
 	processor.result_path = config.getValueString("Application", "ResultPath");
@@ -59,12 +59,12 @@ int _tmain(int argc, TCHAR *argv[])
 	mywrite.close();
 	mywrite1.close();
 
-	while (1) {
+	/*while (1) {
 		processor.Run();
 		Sleep(processor.deley * 1000);
-	}
+	}*/
 
-	/*SERVICE_TABLE_ENTRY ServiceTable[] =
+	SERVICE_TABLE_ENTRY ServiceTable[] =
 	{
 		{SERVICE_NAME, (LPSERVICE_MAIN_FUNCTION)ServiceMain},
 		{NULL, NULL}
@@ -73,7 +73,7 @@ int _tmain(int argc, TCHAR *argv[])
 	if (StartServiceCtrlDispatcher(ServiceTable) == FALSE)
 	{
 		return GetLastError();
-	}*/
+	}
 
 	return 0;
 }

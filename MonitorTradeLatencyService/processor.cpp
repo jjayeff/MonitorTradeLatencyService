@@ -43,9 +43,9 @@ int Processor::Run() {
 				if (ReadFile(read_in_file, &in_acc_file[i], i))
 					return 1;
 			}
-			cout << out_acc_file[i].size() << "/" << in_acc_file[i].size() << " ";
+			//cout << out_acc_file[i].size() << "/" << in_acc_file[i].size() << " ";
 		}
-		cout << endl;
+		//cout << endl;
 
 		// Write result
 		if (WriteFile())
@@ -195,6 +195,10 @@ int Processor::WriteFile() {
 					int tmp1 = -1, tmp2 = -1, index = -1;
 					for (int k = 0; k < account.size(); k++)
 						if (tmp.account.substr(0, 2) == account[k].substr(3, 2))
+							index = k;
+						else if (tmp.account.substr(0, 2) == "97" && account[k].substr(2, 3) == "117")
+							index = k;
+						else if (tmp.account.substr(0, 2) == "98" && account[k].substr(2, 3) == "118")
 							index = k;
 					if (index > -1) {
 						for (int k = 0; k < out_acc_file[index].size(); k++)
