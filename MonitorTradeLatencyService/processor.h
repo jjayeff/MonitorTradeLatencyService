@@ -58,9 +58,11 @@ public:
 	int					WriteAverageFile();
 	string				DiffTime(string time1, string time2);
 	string				Diff2String(float time);
+	float				String2Diff(string difftime);
 	int					SetFrontBackName();
 	int					SetFrontBackName(string key_front, string key_back);
 	int					CutString(string input);
+	string				CutStringGroup(string input);
 
 private:
 };

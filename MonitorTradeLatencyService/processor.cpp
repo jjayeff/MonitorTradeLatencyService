@@ -43,9 +43,7 @@ int Processor::Run() {
 				if (ReadFile(read_in_file, &in_acc_file[i], i))
 					return 1;
 			}
-			//cout << out_acc_file[i].size() << "/" << in_acc_file[i].size() << " ";
 		}
-		//cout << endl;
 
 		// Write result
 		if (WriteFile())
@@ -215,10 +213,10 @@ int Processor::WriteFile() {
 							}
 					}
 					if (tmp1 > -1 && tmp2 > -1) {
-						float diff_fix_set = stof(DiffTime(time_out_acc, out_file[i].time));
-						float diff_set_fix = stof(DiffTime(time_out_acc, time_in_acc));
-						float diff_fix_mt4 = stof(DiffTime(time_in_acc, in_file[j].time));
-						mywrite1 << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << Diff2String(diff_fix_set) << "," << Diff2String(diff_set_fix) << "," << Diff2String(diff_fix_mt4) << "\n";
+						float T1 = stof(DiffTime(time_out_acc, out_file[i].time));
+						float T2 = stof(DiffTime(time_out_acc, time_in_acc));
+						float T3 = stof(DiffTime(time_in_acc, in_file[j].time));
+						mywrite1 << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "\n";
 						mywrite << tmp.msg_type << "," << tmp.account << "," << tmp.group << "," << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << "\n";
 						if (diff < stof(tmp.diftime)) {
 							LOGW << "Diff Over: " << tmp.id << " | Difftime: " << tmp.diftime;
@@ -266,18 +264,17 @@ int Processor::WriteAverageFile() {
 	vector<string>groups;
 	vector<string>accounts;
 	for (int i = 0; i < data.size(); i++) {
-		sum += stof(data[i].diftime);
-
+		sum += String2Diff(data[i].diftime);
 		if (groups.size() == 0)
-			groups.push_back(data[i].group);
+			groups.push_back(CutStringGroup(data[i].group));
 		if (accounts.size() == 0)
 			accounts.push_back(data[i].account);
 
 		for (int j = 0; j < groups.size(); j++)
-			if (data[i].group == groups[j])
+			if (CutStringGroup(data[i].group) == groups[j])
 				break;
 			else if (j + 1 == groups.size())
-				groups.push_back(data[i].group);
+				groups.push_back(CutStringGroup(data[i].group));
 
 		for (int j = 0; j < accounts.size(); j++)
 			if (data[i].account == accounts[j])
@@ -291,13 +288,16 @@ int Processor::WriteAverageFile() {
 	mywrite << "Average: " << Diff2String(sum / data.size()) << "\n";
 
 	// Average by group
+	for (int i = 0; i < groups.size(); i++) {
+
+	}
 	mywrite << "\n========================= Group Average =========================" << "\n";
 	for (int i = 0; i < groups.size(); i++) {
 		float sum = 0;
 		int count = 0;
 		for (int j = 0; j < data.size(); j++) {
-			if (groups[i] == data[j].group) {
-				sum += stof(data[j].diftime);
+			if (groups[i] == CutStringGroup(data[j].group)) {
+				sum += String2Diff(data[j].diftime);
 				count++;
 			}
 		}
@@ -311,7 +311,7 @@ int Processor::WriteAverageFile() {
 		int count = 0;
 		for (int j = 0; j < data.size(); j++) {
 			if (accounts[i] == data[j].account) {
-				sum += stof(data[j].diftime);
+				sum += String2Diff(data[j].diftime);
 				count++;
 			}
 		}
@@ -362,6 +362,14 @@ string Processor::Diff2String(float difftime) {
 	if (difftime < 60)
 		tmp += to_string(difftime);
 	return tmp;
+}
+float Processor::String2Diff(string difftime) {
+	time_t tStart;
+	int  hh, mm;
+	float ss;
+	const char *diff_time = difftime.c_str();
+	sscanf(diff_time, "%d:%d:%f", &hh, &mm, &ss);
+	return ss;
 }
 //+------------------------------------------------------------------+
 //| Other Function                                                   |
@@ -501,4 +509,12 @@ int Processor::CutString(string input) {
 			tmp += input[i];
 	}
 	return 0;
+}
+string Processor::CutStringGroup(string input) {
+	string tmp;
+	for (int i = 0; i < input.length(); i++)
+		if (input[i] == '_')
+			return tmp;
+		else
+			tmp += input[i];
 }
