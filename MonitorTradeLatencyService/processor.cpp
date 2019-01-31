@@ -180,7 +180,7 @@ int Processor::WriteFile() {
 		ofstream mywrite(result_path + "MonitorTradeLatencyService_" + date + ".csv", std::ofstream::out | std::ofstream::app);
 		ofstream mywrite1(result_path + "MonitorTradeLatencyService-Sub_" + date + ".csv", std::ofstream::out | std::ofstream::app);
 
-		for (int i = 0; i < out_file.size(); i++)
+		for (int i = 0; i < out_file.size(); i++) {
 			for (int j = 0; j < in_file.size(); j++)
 				if (out_file[i].id == in_file[j].id) {
 					Data tmp;
@@ -231,6 +231,7 @@ int Processor::WriteFile() {
 						break;
 					}
 				}
+		}
 
 		mywrite.close();
 		mywrite1.close();
@@ -258,6 +259,10 @@ int Processor::WriteAverageFile() {
 				data.push_back(tmp);
 			}
 		}
+	}
+	else {
+		LOGE << "Cannot read " << result_path + "MonitorTradeLatencyService_" + date + ".csv";
+		return 1;
 	}
 
 	float sum = 0;
@@ -320,7 +325,7 @@ int Processor::WriteAverageFile() {
 
 	mywrite << "\n=================================================================" << "\n";
 	mywrite.close();
-
+	
 	// Clear memory
 	data.clear();
 
@@ -517,4 +522,5 @@ string Processor::CutStringGroup(string input) {
 			return tmp;
 		else
 			tmp += input[i];
+	return tmp;
 }
