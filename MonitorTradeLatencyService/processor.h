@@ -16,6 +16,9 @@ public:
 		string				msg_type = "";
 		string				account = "";
 		string				group = "";
+		string				sending_time = "";
+		string				transact_time = "";
+		string				order_type = "";
 	};
 	struct Data
 	{
@@ -23,7 +26,7 @@ public:
 		string				diftime = "";					// different time
 		string				account = "";
 		string				group = "";
-		string				msg_type = "";
+		string				order_type = "";
 	};
 	vector<File>		out_file;
 	vector<File>		in_file;

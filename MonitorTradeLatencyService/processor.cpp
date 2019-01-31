@@ -71,6 +71,16 @@ int Processor::ReadFile(string input) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 				tmp.time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
+				tmp.transact_time = line.substr(FindField(line, "60=") + 3, 20);
+				if (line.substr(FindField(line, "54=") + 3, 1) == "1")
+					tmp.order_type = "Buy/";
+				else if (line.substr(FindField(line, "54=") + 3, 1) == "2")
+					tmp.order_type = "Sell/";
+				if (line.substr(FindField(line, "40=") + 3, 1) == "1")
+					tmp.order_type += "MP";
+				else if (line.substr(FindField(line, "40=") + 3, 1) == "2")
+					tmp.order_type += "Limit";
 				for (int i = 0; i < in_file.size(); i++)
 					if (in_file[i].id == tmp.id) {
 						break;
@@ -86,6 +96,20 @@ int Processor::ReadFile(string input) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 				tmp.time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
+				tmp.transact_time = line.substr(FindField(line, "60=") + 3, 20);
+				if (line.substr(FindField(line, "54=") + 3, 1) == "1")
+					tmp.order_type = "Buy/";
+				else if (line.substr(FindField(line, "54=") + 3, 1) == "2")
+					tmp.order_type = "Sell/";
+				if (FindField(line, "40=") > -1) {
+					if (line.substr(FindField(line, "40=") + 3, 1) == "1")
+						tmp.order_type += "MP";
+					else if (line.substr(FindField(line, "40=") + 3, 1) == "2")
+						tmp.order_type += "Limit";
+				}
+				else
+					tmp.order_type += "Cancel";
 				if (FindField(line, "35=D") > -1) {
 					if (FindField(line, "452=") > -1)
 						tmp.account = line.substr(FindField(line, "452=") + 9, FindField(line, "581=") - FindField(line, "452=") - 10);
@@ -127,6 +151,7 @@ int Processor::ReadFile(string input, vector<File> *value, int index) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 				tmp.time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
 				for (int i = 0; i < value->size(); i++)
 					if ((*value)[i].id == tmp.id) {
 						break;
@@ -142,6 +167,8 @@ int Processor::ReadFile(string input, vector<File> *value, int index) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
 				tmp.time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
+				tmp.transact_time = line.substr(FindField(line, "60=") + 3, 20);
 				value->push_back(tmp);
 				file_out_acc_line[index] = count;
 			}
@@ -188,8 +215,8 @@ int Processor::WriteFile() {
 					tmp.diftime = DiffTime(out_file[i].time, in_file[j].time);
 					tmp.account = out_file[i].account;
 					tmp.group = out_file[i].group;
-					tmp.msg_type = out_file[i].msg_type;
-					string time_out_acc = "", time_in_acc = "";
+					tmp.order_type = out_file[i].order_type;
+					vector<string> time_out_acc, time_in_acc;
 					int tmp1 = -1, tmp2 = -1, index = -1;
 					for (int k = 0; k < account.size(); k++)
 						if (tmp.account.substr(0, 2) == account[k].substr(3, 2))
@@ -201,23 +228,48 @@ int Processor::WriteFile() {
 					if (index > -1) {
 						for (int k = 0; k < out_acc_file[index].size(); k++)
 							if (out_file[i].id == out_acc_file[index][k].id) {
-								time_out_acc = out_acc_file[index][k].time;
+								time_out_acc.push_back(out_acc_file[index][k].time);
+								time_out_acc.push_back(out_acc_file[index][k].sending_time);
+								time_out_acc.push_back(out_acc_file[index][k].transact_time);
 								tmp1 = k;
 								break;
 							}
 						for (int k = 0; k < in_acc_file[index].size(); k++)
 							if (out_file[i].id == in_acc_file[index][k].id) {
-								time_in_acc = in_acc_file[index][k].time;
+								time_in_acc.push_back(in_acc_file[index][k].time);
+								time_in_acc.push_back(in_acc_file[index][k].sending_time);
+								time_in_acc.push_back(in_acc_file[index][k].transact_time);
 								tmp2 = k;
 								break;
 							}
 					}
 					if (tmp1 > -1 && tmp2 > -1) {
-						float T1 = stof(DiffTime(time_out_acc, out_file[i].time));
-						float T2 = stof(DiffTime(time_out_acc, time_in_acc));
-						float T3 = stof(DiffTime(time_in_acc, in_file[j].time));
+						float T1 = stof(DiffTime(out_file[i].time, time_out_acc[0]));
+						float T2 = stof(DiffTime(time_out_acc[0], time_in_acc[0]));
+						float T3 = stof(DiffTime(time_in_acc[0], in_file[j].time));
+						/*float t1 = stof(DiffTime(out_file[i].time, out_file[i].transact_time));
+						float t2 = stof(DiffTime(out_file[i].transact_time, out_file[i].sending_time));
+						float t3 = stof(DiffTime(out_file[i].sending_time, time_out_acc[0]));
+						float t5 = stof(DiffTime(time_out_acc[0], time_in_acc[0]));
+						float t6 = stof(DiffTime(time_in_acc[0], in_file[j].time));
+						float t7 = stof(DiffTime(in_file[j].time, in_file[j].transact_time));
+						cout << "===================================" << endl;
+						cout << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "\n";
+						cout << "===================================" << endl;
+						cout << "Dm: " << out_file[i].time << " | " << out_file[i].sending_time << " | " << out_file[i].transact_time << endl;
+						cout << "Ds: " << time_out_acc[0] << " | " << time_out_acc[1] << " | " << time_out_acc[2] << endl;
+						cout << "8s: " << time_in_acc[0] << " | " << time_in_acc[1] << " | " << time_in_acc[2] << endl;
+						cout << "8m: " << in_file[j].time << " | " << in_file[j].sending_time << " | " << in_file[j].transact_time << endl;
+						cout << "===================================" << endl;
+						cout << "t1: " << out_file[i].transact_time.substr(15, 10) << " - " << out_file[i].time.substr(15, 10) << " = " << t1 << endl;
+						cout << "t2: " << out_file[i].sending_time.substr(15, 10) << " - " << out_file[i].transact_time.substr(15, 10) << " = " << t2 << endl;
+						cout << "t3: " << time_out_acc[1].substr(15, 10) << " - " << out_file[i].sending_time.substr(15, 10) << " = " << t3 << endl;
+						cout << "t5: " << time_in_acc[0].substr(15, 10) << " - " << time_out_acc[0].substr(15, 10) << " = " << t5 << endl;
+						cout << "t6: " << in_file[j].time.substr(15, 10) << " - " << time_in_acc[0].substr(15, 10) << " = " << t6<< endl;
+						cout << "t7: " << in_file[j].transact_time.substr(15, 10) << " - " << in_file[j].time.substr(15, 10) << " = " << t7 << endl;
+						cout << "===================================" << endl;*/
 						mywrite1 << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "\n";
-						mywrite << tmp.msg_type << "," << tmp.account << "," << tmp.group << "," << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << "\n";
+						mywrite << tmp.order_type << "," << tmp.account << "," << tmp.group << "," << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << "\n";
 						if (diff < stof(tmp.diftime)) {
 							LOGW << "Diff Over: " << tmp.id << " | Difftime: " << tmp.diftime;
 						}
@@ -251,7 +303,7 @@ int Processor::WriteAverageFile() {
 	myfile.seekg(p);
 	if (myfile.is_open()) {
 		while (myfile.eof() == false) {
-			while (getline(myfile, tmp.msg_type, ',')) {
+			while (getline(myfile, tmp.order_type, ',')) {
 				getline(myfile, tmp.account, ',');
 				getline(myfile, tmp.group, ',');
 				getline(myfile, tmp.id, ',');
@@ -265,11 +317,28 @@ int Processor::WriteAverageFile() {
 		return 1;
 	}
 
-	float sum = 0;
+	float sum = 0, buy_mp = 0, sell_mp = 0, buy_limit = 0, sell_limit = 0;
+	int count_bm = 0, count_sm = 0, count_bl = 0, count_sl = 0;
 	vector<string>groups;
 	vector<string>accounts;
 	for (int i = 0; i < data.size(); i++) {
 		sum += String2Diff(data[i].diftime);
+		if (data[i].order_type == "Buy/MP") {
+			buy_mp += String2Diff(data[i].diftime);
+			count_bm++;
+		}
+		else if (data[i].order_type == "Sell/MP") {
+			sell_mp += String2Diff(data[i].diftime);
+			count_sm++;
+		}
+		else if (data[i].order_type == "Buy/Limit") {
+			buy_limit += String2Diff(data[i].diftime);
+			count_bl++;
+		}
+		else if (data[i].order_type == "Sell/Limit") {
+			sell_limit += String2Diff(data[i].diftime);
+			count_sl++;
+		}
 		if (groups.size() == 0)
 			groups.push_back(CutStringGroup(data[i].group));
 		if (accounts.size() == 0)
@@ -291,42 +360,85 @@ int Processor::WriteAverageFile() {
 	// Average of all
 	mywrite << "============================ Average ============================" << "\n";
 	mywrite << "Average: " << Diff2String(sum / data.size()) << "\n";
+	mywrite << "- Average(Buy/MP): " << Diff2String(buy_mp / count_bm) << "\n";
+	mywrite << "- Average(Sell/MP): " << Diff2String(sell_mp / count_sm) << "\n";
+	mywrite << "- Average(Buy/Limit): " << Diff2String(buy_limit / count_bl) << "\n";
+	mywrite << "- Average(Sell/Limit): " << Diff2String(sell_limit / count_sl) << "\n";
 
 	// Average by group
-	for (int i = 0; i < groups.size(); i++) {
-
-	}
 	mywrite << "\n========================= Group Average =========================" << "\n";
 	for (int i = 0; i < groups.size(); i++) {
-		float sum = 0;
-		int count = 0;
+		float sum = 0, buy_mp = 0, sell_mp = 0, buy_limit = 0, sell_limit = 0;
+		int count = 0, count_bm = 0, count_sm = 0, count_bl = 0, count_sl = 0;
 		for (int j = 0; j < data.size(); j++) {
 			if (groups[i] == CutStringGroup(data[j].group)) {
 				sum += String2Diff(data[j].diftime);
+				if (data[j].order_type == "Buy/MP") {
+					buy_mp += String2Diff(data[j].diftime);
+					count_bm++;
+				}
+				else if (data[j].order_type == "Sell/MP") {
+					sell_mp += String2Diff(data[j].diftime);
+					count_sm++;
+				}
+				else if (data[j].order_type == "Buy/Limit") {
+					buy_limit += String2Diff(data[j].diftime);
+					count_bl++;
+				}
+				else if (data[j].order_type == "Sell/Limit") {
+					sell_limit += String2Diff(data[j].diftime);
+					count_sl++;
+				}
 				count++;
 			}
 		}
 		mywrite << "Average(" << groups[i] << "): " << Diff2String(sum / count) << "\n";
+		mywrite << "- Average(" << groups[i] << " Buy/MP): " << Diff2String(buy_mp / count_bm) << "\n";
+		mywrite << "- Average(" << groups[i] << " Sell/MP): " << Diff2String(sell_mp / count_sm) << "\n";
+		mywrite << "- Average(" << groups[i] << " Buy/Limit): " << Diff2String(buy_limit / count_bl) << "\n";
+		mywrite << "- Average(" << groups[i] << " Sell/Limit): " << Diff2String(sell_limit / count_sl) << "\n";
 	}
 
 	// Average by account
 	mywrite << "\n======================== Account Average ========================" << "\n";
 	for (int i = 0; i < accounts.size(); i++) {
-		float sum = 0;
-		int count = 0;
+		float sum = 0, buy_mp = 0, sell_mp = 0, buy_limit = 0, sell_limit = 0;
+		int count = 0, count_bm = 0, count_sm = 0, count_bl = 0, count_sl = 0;
 		for (int j = 0; j < data.size(); j++) {
 			if (accounts[i] == data[j].account) {
 				sum += String2Diff(data[j].diftime);
+				if (data[j].order_type == "Buy/MP") {
+					buy_mp += String2Diff(data[j].diftime);
+					count_bm++;
+				}
+				else if (data[j].order_type == "Sell/MP") {
+					sell_mp += String2Diff(data[j].diftime);
+					count_sm++;
+				}
+				else if (data[j].order_type == "Buy/Limit") {
+					buy_limit += String2Diff(data[j].diftime);
+					count_bl++;
+				}
+				else if (data[j].order_type == "Sell/Limit") {
+					sell_limit += String2Diff(data[j].diftime);
+					count_sl++;
+				}
 				count++;
 			}
 		}
 		mywrite << "Average(" << accounts[i] << "): " << Diff2String(sum / count) << "\n";
+		mywrite << "- Average(" << accounts[i] << " Buy/MP): " << Diff2String(buy_mp / count_bm) << "\n";
+		mywrite << "- Average(" << accounts[i] << " Sell/MP): " << Diff2String(sell_mp / count_sm) << "\n";
+		mywrite << "- Average(" << accounts[i] << " Buy/Limit): " << Diff2String(buy_limit / count_bl) << "\n";
+		mywrite << "- Average(" << accounts[i] << " Sell/Limit): " << Diff2String(sell_limit / count_sl) << "\n";
 	}
 
 	mywrite << "\n=================================================================" << "\n";
 	mywrite.close();
-	
+
 	// Clear memory
+	groups.clear();
+	accounts.clear();
 	data.clear();
 
 	return 0;
@@ -345,7 +457,7 @@ string Processor::DiffTime(string time1, string time2) {
 	sscanf(end_time, "%d-%d:%d:%f", &ymd2, &hh2, &mm2, &ss2);
 	float strat = hh1 * 60 * 60 + mm1 * 60 + ss1;
 	float end = hh2 * 60 * 60 + mm2 * 60 + ss2;
-	return to_string(abs(end - strat));
+	return to_string(end - strat);
 }
 //+------------------------------------------------------------------+
 //| Diff to String                                                   |
