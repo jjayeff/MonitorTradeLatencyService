@@ -12,7 +12,7 @@ public:
 	struct File
 	{
 		string				id = "";						// 11= ClOrdID 
-		string				time = "";						// Run time
+		string				log_time = "";						// Run time
 		string				msg_type = "";
 		string				account = "";
 		string				group = "";
@@ -28,8 +28,8 @@ public:
 		string				group = "";
 		string				order_type = "";
 	};
-	vector<File>		out_file;
-	vector<File>		in_file;
+	vector<File>		MF_out;
+	vector<File>		MF_in;
 	vector<File>		out_acc_file[9];
 	vector<File>		in_acc_file[9];
 	vector<Data>		data;
@@ -60,6 +60,7 @@ public:
 	int					WriteFile();
 	int					WriteAverageFile();
 	string				DiffTime(string time1, string time2);
+	string				PushTime(string time, float diff);
 	string				Diff2String(float time);
 	float				String2Diff(string difftime);
 	int					SetFrontBackName();

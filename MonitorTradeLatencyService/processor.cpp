@@ -2,7 +2,6 @@
 #include "stdafx.h"
 #include "Processor.h"
 #include <tchar.h>
-
 //+------------------------------------------------------------------+
 //| Constructor                                                      |
 //+------------------------------------------------------------------+
@@ -70,9 +69,9 @@ int Processor::ReadFile(string input) {
 			if (FindField(line, "35=8") > -1 && count > file_in_line && FindField(line, "150=0") > -1) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
-				tmp.time = line.substr(0, FindField(line, "8=") - 3);
-				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
-				tmp.transact_time = line.substr(FindField(line, "60=") + 3, 20);
+				tmp.log_time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, FindField(line, "369=") - FindField(line, "52=") - 4);
+				tmp.transact_time = line.substr(FindField(line, "60=") + 3, FindField(line, "77=") - FindField(line, "60=") - 4);
 				if (line.substr(FindField(line, "54=") + 3, 1) == "1")
 					tmp.order_type = "Buy/";
 				else if (line.substr(FindField(line, "54=") + 3, 1) == "2")
@@ -81,23 +80,23 @@ int Processor::ReadFile(string input) {
 					tmp.order_type += "MP";
 				else if (line.substr(FindField(line, "40=") + 3, 1) == "2")
 					tmp.order_type += "Limit";
-				for (int i = 0; i < in_file.size(); i++)
-					if (in_file[i].id == tmp.id) {
+				for (int i = 0; i < MF_in.size(); i++)
+					if (MF_in[i].id == tmp.id) {
 						break;
 					}
-					else if (i + 1 == in_file.size()) {
-						in_file.push_back(tmp);
+					else if (i + 1 == MF_in.size()) {
+						MF_in.push_back(tmp);
 					}
-				if (in_file.size() == 0)
-					in_file.push_back(tmp);
+				if (MF_in.size() == 0)
+					MF_in.push_back(tmp);
 				file_in_line = count;
 			}
 			else if ((FindField(line, "35=D") > -1 || FindField(line, "35=F") > -1 || FindField(line, "35=G") > -1) && count > file_out_line) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
-				tmp.time = line.substr(0, FindField(line, "8=") - 3);
-				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
-				tmp.transact_time = line.substr(FindField(line, "60=") + 3, 20);
+				tmp.log_time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, FindField(line, "11=") - FindField(line, "52=") - 4);
+				tmp.transact_time = line.substr(FindField(line, "60=") + 3, FindField(line, "38=") - FindField(line, "60=") - 4);
 				if (line.substr(FindField(line, "54=") + 3, 1) == "1")
 					tmp.order_type = "Buy/";
 				else if (line.substr(FindField(line, "54=") + 3, 1) == "2")
@@ -124,7 +123,7 @@ int Processor::ReadFile(string input) {
 				}
 				tmp.group = line.substr(FindField(line, "50001=") + 6, FindField(line, "50002=") - FindField(line, "50001=") - 7);
 				tmp.msg_type = line.substr(FindField(line, "35=") + 3, 1);
-				out_file.push_back(tmp);
+				MF_out.push_back(tmp);
 				file_out_line = count;
 			}
 			count++;
@@ -150,8 +149,8 @@ int Processor::ReadFile(string input, vector<File> *value, int index) {
 			if (FindField(line, "35=8") > -1 && count > file_in_acc_line[index]) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
-				tmp.time = line.substr(0, FindField(line, "8=") - 3);
-				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
+				tmp.log_time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, FindField(line, "369=") - FindField(line, "52=") - 4);
 				for (int i = 0; i < value->size(); i++)
 					if ((*value)[i].id == tmp.id) {
 						break;
@@ -166,9 +165,9 @@ int Processor::ReadFile(string input, vector<File> *value, int index) {
 			else if ((FindField(line, "35=D") > -1 || FindField(line, "35=F") > -1 || FindField(line, "35=G") > -1) && count > file_out_acc_line[index]) {
 				File tmp;
 				tmp.id = line.substr(FindField(line, "11=") + 3, 20);
-				tmp.time = line.substr(0, FindField(line, "8=") - 3);
-				tmp.sending_time = line.substr(FindField(line, "52=") + 3, 20);
-				tmp.transact_time = line.substr(FindField(line, "60=") + 3, 20);
+				tmp.log_time = line.substr(0, FindField(line, "8=") - 3);
+				tmp.sending_time = line.substr(FindField(line, "52=") + 3, FindField(line, "11=") - FindField(line, "52=") - 4);
+				tmp.transact_time = line.substr(FindField(line, "60=") + 3, FindField(line, "38=") - FindField(line, "60=") - 4);
 				value->push_back(tmp);
 				file_out_acc_line[index] = count;
 			}
@@ -198,7 +197,7 @@ int Processor::FindField(string line, char* input) {
 //| Write File                                                       |
 //+------------------------------------------------------------------+
 int Processor::WriteFile() {
-	if (out_file.size() < 1 || in_file.size() < 1)
+	if (MF_out.size() < 1 || MF_in.size() < 1)
 		return 0;
 	else {
 		time_t t = time(0);   // get time now
@@ -207,16 +206,16 @@ int Processor::WriteFile() {
 		ofstream mywrite(result_path + "MonitorTradeLatencyService_" + date + ".csv", std::ofstream::out | std::ofstream::app);
 		ofstream mywrite1(result_path + "MonitorTradeLatencyService-Sub_" + date + ".csv", std::ofstream::out | std::ofstream::app);
 
-		for (int i = 0; i < out_file.size(); i++) {
-			for (int j = 0; j < in_file.size(); j++)
-				if (out_file[i].id == in_file[j].id) {
+		for (int i = 0; i < MF_out.size(); i++) {
+			for (int j = 0; j < MF_in.size(); j++)
+				if (MF_out[i].id == MF_in[j].id) {
 					Data tmp;
-					tmp.id = out_file[i].id;
-					tmp.diftime = DiffTime(out_file[i].time, in_file[j].time);
-					tmp.account = out_file[i].account;
-					tmp.group = out_file[i].group;
-					tmp.order_type = out_file[i].order_type;
-					vector<string> time_out_acc, time_in_acc;
+					tmp.id = MF_out[i].id;
+					tmp.diftime = DiffTime(MF_in[j].log_time, MF_out[i].log_time);
+					tmp.account = MF_out[i].account;
+					tmp.group = MF_out[i].group;
+					tmp.order_type = MF_out[i].order_type;
+					File FS_out, FS_in;
 					int tmp1 = -1, tmp2 = -1, index = -1;
 					for (int k = 0; k < account.size(); k++)
 						if (tmp.account.substr(0, 2) == account[k].substr(3, 2))
@@ -227,48 +226,55 @@ int Processor::WriteFile() {
 							index = k;
 					if (index > -1) {
 						for (int k = 0; k < out_acc_file[index].size(); k++)
-							if (out_file[i].id == out_acc_file[index][k].id) {
-								time_out_acc.push_back(out_acc_file[index][k].time);
-								time_out_acc.push_back(out_acc_file[index][k].sending_time);
-								time_out_acc.push_back(out_acc_file[index][k].transact_time);
+							if (MF_out[i].id == out_acc_file[index][k].id) {
+								FS_out.log_time = out_acc_file[index][k].log_time;
+								FS_out.sending_time = out_acc_file[index][k].sending_time;
+								FS_out.transact_time = out_acc_file[index][k].transact_time;
 								tmp1 = k;
 								break;
 							}
 						for (int k = 0; k < in_acc_file[index].size(); k++)
-							if (out_file[i].id == in_acc_file[index][k].id) {
-								time_in_acc.push_back(in_acc_file[index][k].time);
-								time_in_acc.push_back(in_acc_file[index][k].sending_time);
-								time_in_acc.push_back(in_acc_file[index][k].transact_time);
+							if (MF_out[i].id == in_acc_file[index][k].id) {
+								FS_in.log_time = in_acc_file[index][k].log_time;
+								FS_in.sending_time = in_acc_file[index][k].sending_time;
+								FS_in.transact_time = in_acc_file[index][k].transact_time;
 								tmp2 = k;
 								break;
 							}
 					}
 					if (tmp1 > -1 && tmp2 > -1) {
-						float T1 = stof(DiffTime(out_file[i].time, time_out_acc[0]));
-						float T2 = stof(DiffTime(time_out_acc[0], time_in_acc[0]));
-						float T3 = stof(DiffTime(time_in_acc[0], in_file[j].time));
-						/*float t1 = stof(DiffTime(out_file[i].time, out_file[i].transact_time));
-						float t2 = stof(DiffTime(out_file[i].transact_time, out_file[i].sending_time));
-						float t3 = stof(DiffTime(out_file[i].sending_time, time_out_acc[0]));
-						float t5 = stof(DiffTime(time_out_acc[0], time_in_acc[0]));
-						float t6 = stof(DiffTime(time_in_acc[0], in_file[j].time));
-						float t7 = stof(DiffTime(in_file[j].time, in_file[j].transact_time));
-						cout << "===================================" << endl;
-						cout << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "\n";
-						cout << "===================================" << endl;
-						cout << "Dm: " << out_file[i].time << " | " << out_file[i].sending_time << " | " << out_file[i].transact_time << endl;
-						cout << "Ds: " << time_out_acc[0] << " | " << time_out_acc[1] << " | " << time_out_acc[2] << endl;
-						cout << "8s: " << time_in_acc[0] << " | " << time_in_acc[1] << " | " << time_in_acc[2] << endl;
-						cout << "8m: " << in_file[j].time << " | " << in_file[j].sending_time << " | " << in_file[j].transact_time << endl;
-						cout << "===================================" << endl;
-						cout << "t1: " << out_file[i].transact_time.substr(15, 10) << " - " << out_file[i].time.substr(15, 10) << " = " << t1 << endl;
-						cout << "t2: " << out_file[i].sending_time.substr(15, 10) << " - " << out_file[i].transact_time.substr(15, 10) << " = " << t2 << endl;
-						cout << "t3: " << time_out_acc[1].substr(15, 10) << " - " << out_file[i].sending_time.substr(15, 10) << " = " << t3 << endl;
-						cout << "t5: " << time_in_acc[0].substr(15, 10) << " - " << time_out_acc[0].substr(15, 10) << " = " << t5 << endl;
-						cout << "t6: " << in_file[j].time.substr(15, 10) << " - " << time_in_acc[0].substr(15, 10) << " = " << t6<< endl;
-						cout << "t7: " << in_file[j].transact_time.substr(15, 10) << " - " << in_file[j].time.substr(15, 10) << " = " << t7 << endl;
-						cout << "===================================" << endl;*/
-						mywrite1 << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "\n";
+						float T1 = 0, T2 = 0, T3 = 0, T4 = 0, T5 = 0, T6 = 0, T7 = 0, T8 = 0, TALL = 0;
+						float FS_diff = 0;
+						string Y = "", X = "";
+						fixed;
+						setprecision(3);
+						FS_diff = stof(DiffTime(FS_in.sending_time, FS_in.log_time));
+						Y = PushTime(FS_out.sending_time, FS_diff);
+						X = PushTime(FS_in.log_time, FS_diff);
+						T1 = stof(DiffTime(FS_out.log_time, MF_out[i].log_time));
+						T2 = stof(DiffTime(FS_out.sending_time, FS_out.log_time));
+						T3 = stof(DiffTime(MF_in[j].transact_time, Y));
+						T4 = stof(DiffTime(FS_in.sending_time, MF_in[j].transact_time));
+						T5 = stof(DiffTime(X, FS_in.sending_time));
+						T6 = stof(DiffTime(MF_in[j].sending_time, MF_in[j].log_time));
+						T7 = stof(DiffTime(MF_in[j].log_time, FS_in.log_time));
+						TALL = stof(DiffTime(FS_in.log_time, FS_out.log_time));
+						/*cout << "*******************************" << endl;
+						cout << "MF_in: " << MF_out[i].log_time << " | " << MF_out[i].sending_time << " | " << MF_out[i].transact_time << endl;
+						cout << "FS_out: " << FS_out.log_time << " | " << FS_out.sending_time << " | " << FS_out.transact_time << endl;
+						cout << "FS_in: " << FS_in.log_time << " | " << FS_in.sending_time << " | " << FS_in.transact_time << endl;
+						cout << "MF_out: " << MF_in[j].log_time << " | " << MF_in[j].sending_time << " | " << MF_in[j].transact_time << endl;
+						cout << "=====================================" << endl;
+						cout << "T1: (" << FS_out.log_time << " - " << MF_out[i].log_time << ") = " << T1 << endl;
+						cout << "T2: (" << FS_out.sending_time << " - " << FS_out.log_time << ") = " << T2 << endl;
+						cout << "TALL: (" << FS_in.log_time << " - " << FS_out.log_time << ") = " << TALL << endl;
+						cout << "- T3: (" << MF_in[j].transact_time << " - (" << FS_out.sending_time << " + " << FS_diff << ")) = " << T3 << endl;
+						cout << "- T4: (" << FS_in.sending_time << " - " << MF_in[j].transact_time << ") = " << T4 << endl;
+						cout << "- T5: ((" << FS_in.log_time << " + " << FS_diff << ") - " << FS_in.sending_time << ") = " << T5 << endl;
+						cout << "TALL: (" << TALL << " SUM: " << T3 + T4 + T5 << ")" << endl;
+						cout << "T6: (" << MF_in[j].sending_time << " - " << FS_in.log_time << ") = " << T6 << endl;
+						cout << "T7: (" << MF_in[j].log_time << " - " << FS_in.log_time << ") = " << T7 << endl;*/
+						mywrite1 << tmp.id << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "," << Diff2String(T4) << "," << Diff2String(T5) << "," << Diff2String(T6) << "," << Diff2String(T7) << "\n";
 						mywrite << tmp.order_type << "," << tmp.account << "," << tmp.group << "," << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << "\n";
 						if (diff < stof(tmp.diftime)) {
 							LOGW << "Diff Over: " << tmp.id << " | Difftime: " << tmp.diftime;
@@ -276,8 +282,8 @@ int Processor::WriteFile() {
 						else
 							LOGI << "Success Data: " << tmp.id << " | Difftime: " << tmp.diftime;
 						// Delete from memory
-						out_file.erase(out_file.begin() + i--);
-						in_file.erase(in_file.begin() + j);
+						MF_out.erase(MF_out.begin() + i--);
+						MF_in.erase(MF_in.begin() + j);
 						out_acc_file[index].erase(out_acc_file[index].begin() + tmp1);
 						in_acc_file[index].erase(in_acc_file[index].begin() + tmp2);
 						break;
@@ -446,18 +452,53 @@ int Processor::WriteAverageFile() {
 //+------------------------------------------------------------------+
 //| Cal different time                                               |
 //+------------------------------------------------------------------+
+float round(float y, int n) {
+	float x = abs(y);
+	int d = 0;
+	if ((x * pow(10, n + 1)) - (floorf(x * pow(10, n))) > 4) d = 1;
+	x = (floorf(x * pow(10, n))) / pow(10, n);
+	if (y > -1)
+		return x;
+	else
+		return x * -1;
+}
 string Processor::DiffTime(string time1, string time2) {
 	time_t tStart;
 	int ymd1, hh1, mm1, ymd2, hh2, mm2;
 	float ss1, ss2;
-	const char *start_time = time1.c_str();
-	const char *end_time = time2.c_str();
+	const char *start_time = time2.c_str();
+	const char *end_time = time1.c_str();
 
 	sscanf(start_time, "%d-%d:%d:%f", &ymd1, &hh1, &mm1, &ss1);
 	sscanf(end_time, "%d-%d:%d:%f", &ymd2, &hh2, &mm2, &ss2);
 	float strat = hh1 * 60 * 60 + mm1 * 60 + ss1;
 	float end = hh2 * 60 * 60 + mm2 * 60 + ss2;
-	return to_string(end - strat);
+	return to_string(round((end - strat), 3));
+}
+string Processor::PushTime(string time, float diff) {
+	time_t tStart;
+	int ymd1, hh1, mm1, ymd2, hh2, mm2;
+	float ss1, ss2;
+	const char *start_time = time.c_str();
+
+	sscanf(start_time, "%d-%d:%d:%f", &ymd1, &hh1, &mm1, &ss1);
+	float result = (hh1 * 60 * 60 + mm1 * 60 + (ss1 + diff));
+	string tmp = "";
+	if (result > 3600) {
+		tmp += to_string((int)result / 3600) + ":";
+		result -= (3600 * ((int)result / 3600));
+	}
+	else
+		tmp += "00:";
+	if (result > 60) {
+		tmp += to_string((int)result / 60) + ":";
+		result -= (60 * ((int)result / 60));
+	}
+	else
+		tmp += "00:";
+	if (result < 60)
+		tmp += to_string(result);
+	return to_string(ymd1) + "-" + tmp;
 }
 //+------------------------------------------------------------------+
 //| Diff to String                                                   |
@@ -468,7 +509,7 @@ string Processor::Diff2String(float difftime) {
 		tmp += to_string((int)difftime / 3600) + ":";
 		difftime -= (3600 * ((int)difftime / 3600));
 	}
-	else
+	else    
 		tmp += "00:";
 	if (difftime > 60) {
 		tmp += to_string((int)difftime / 60) + ":";
