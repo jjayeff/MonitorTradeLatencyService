@@ -202,9 +202,11 @@ int Processor::WriteFile() {
 	else {
 		time_t t = time(0);   // get time now
 		tm* now = localtime(&t);
-		string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
-		ofstream mywrite(result_path + "MonitorTradeLatencyService_" + date + ".csv", std::ofstream::out | std::ofstream::app);
-		ofstream mywrite1(result_path + "MonitorTradeLatencyService-Sub_" + date + ".csv", std::ofstream::out | std::ofstream::app);
+		string mon = now->tm_mon < 10 + 1 ? "0" + to_string(now->tm_mon + 1) : to_string(now->tm_mon + 1);
+		string day = now->tm_mday < 10 ? "0" + to_string(now->tm_mday) : to_string(now->tm_mday);
+		string date = to_string(now->tm_year + 1900) + mon + day;
+		ofstream mywrite(result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv", std::ofstream::out | std::ofstream::app);
+		ofstream mywrite1(result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Sub.csv", std::ofstream::out | std::ofstream::app);
 
 		for (int i = 0; i < MF_out.size(); i++) {
 			for (int j = 0; j < MF_in.size(); j++)
@@ -300,10 +302,12 @@ int Processor::WriteFile() {
 int Processor::WriteAverageFile() {
 	time_t t = time(0);   // get time now
 	tm* now = localtime(&t);
-	string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
-	ofstream mywrite(result_path + "MonitorTradeLatencyService-Average_" + date + ".csv");
+	string mon = now->tm_mon < 10 + 1 ? "0" + to_string(now->tm_mon + 1) : to_string(now->tm_mon + 1);
+	string day = now->tm_mday < 10 ? "0" + to_string(now->tm_mday) : to_string(now->tm_mday);
+	string date = to_string(now->tm_year + 1900) + mon + day;
+	ofstream mywrite(result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Average.csv");
 
-	fstream myfile(result_path + "MonitorTradeLatencyService_" + date + ".csv", fstream::in);
+	fstream myfile(result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv", fstream::in);
 	Data tmp;
 	size_t   p = 0;
 	myfile.seekg(p);
@@ -509,7 +513,7 @@ string Processor::Diff2String(float difftime) {
 		tmp += to_string((int)difftime / 3600) + ":";
 		difftime -= (3600 * ((int)difftime / 3600));
 	}
-	else    
+	else
 		tmp += "00:";
 	if (difftime > 60) {
 		tmp += to_string((int)difftime / 60) + ":";

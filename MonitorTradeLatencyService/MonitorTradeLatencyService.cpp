@@ -53,9 +53,13 @@ int _tmain(int argc, TCHAR *argv[])
 	//----------------------------------------------------------------------
 	time_t t = time(0);   // get time now
 	tm* now = localtime(&t);
-	string date = to_string(now->tm_year + 1900) + to_string(now->tm_mon + 1) + to_string(now->tm_mday);
-	ofstream mywrite(result_path + "MonitorTradeLatencyService_" + date + ".csv");
-	ofstream mywrite1(result_path + "MonitorTradeLatencyService-Sub_" + date + ".csv");
+	string mon = now->tm_mon < 10 + 1 ? "0" + to_string(now->tm_mon + 1) : to_string(now->tm_mon + 1);
+	string day = now->tm_mday < 10 ? "0" + to_string(now->tm_mday) : to_string(now->tm_mday);
+	string date = to_string(now->tm_year + 1900) + mon + day;
+	string tmp_path = "results\\MonitorTradeLatencyService" + date + "\\";
+	CreateDirectory(tmp_path.c_str(), NULL);
+	ofstream mywrite(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv");
+	ofstream mywrite1(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Sub.csv");
 	mywrite.close();
 	mywrite1.close();
 
