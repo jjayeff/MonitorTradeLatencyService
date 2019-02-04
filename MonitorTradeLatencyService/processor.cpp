@@ -27,7 +27,9 @@ int Processor::Run() {
 			return 1;
 		if (ReadFile(read_in_file))
 			return 1;
-
+		// Connect Database
+		if (ConnectDataBase())
+			return 1;
 
 		// Read file .in .out get account value
 		for (int i = 0; i < account.size(); i++) {
@@ -53,6 +55,58 @@ int Processor::Run() {
 	}
 
 	return 0;
+}
+//+------------------------------------------------------------------+
+//| Database Function                                                |
+//+------------------------------------------------------------------+
+int Processor::ConnectDataBase() {
+	// Connect Datebase
+	if (!dbs.connect(db_driver, db_server, db_user, db_password))
+	{
+		LOGE << "!Database connect fail";
+		dbs.commit();
+		return 1;
+	}
+	else
+	{
+		LOGI << "Database connected : " << db_server << ", Driver : " << db_driver;
+		return 0;
+	}
+}
+int Processor::SendEmail(Data value, float *time) {
+	if (!dbs.isConnected())
+	{
+		LOGE << "Database disconnect! Try reconnect!";
+		dbs.connect();
+	}
+
+	char cmd_temp[512];
+	sprintf_s(cmd_temp, "INSERT INTO acc_info.dbo.send_email(broker_id, mt4_login_id, due_date, template_email, email_to, email_from, email_subject, param1, param2, param3, param4, param5, param6, param7, param8, param9, param10) VALUES('%s', '%d', GETDATE(), '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s', '%s');",
+		CutStringGroup(value.group).c_str(),
+		stoi(value.account.c_str()),
+		email_template.c_str(),
+		email_to.c_str(),
+		email_from.c_str(),
+		"[MonitorTradeLatency] Over time",
+		value.id.c_str(),
+		value.diftime.c_str(),
+		value.order_type.c_str(),
+		to_string(time[0]).c_str(),
+		to_string(time[1]).c_str(),
+		to_string(time[2]).c_str(),
+		to_string(time[3]).c_str(),
+		to_string(time[4]).c_str(),
+		to_string(time[5]).c_str(),
+		to_string(time[6]).c_str());
+
+	if (!dbs.execute(cmd_temp))
+	{
+		LOGE << "!Excute database fail";
+		return 0;
+	}
+
+	LOGI << "SendEmail Success!!";
+	return 1;
 }
 //+------------------------------------------------------------------+
 //| Read File                                                        |
@@ -279,6 +333,8 @@ int Processor::WriteFile() {
 						mywrite1 << tmp.id << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "," << Diff2String(T4) << "," << Diff2String(T5) << "," << Diff2String(T6) << "," << Diff2String(T7) << "\n";
 						mywrite << tmp.order_type << "," << tmp.account << "," << tmp.group << "," << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << "\n";
 						if (diff < stof(tmp.diftime)) {
+							float t_array[7] = { T1, T2, T3, T4, T5, T6, T7 };
+							SendEmail(tmp, t_array);
 							LOGW << "Diff Over: " << tmp.id << " | Difftime: " << tmp.diftime;
 						}
 						else
@@ -318,7 +374,7 @@ int Processor::WriteAverageFile() {
 				getline(myfile, tmp.group, ',');
 				getline(myfile, tmp.id, ',');
 				getline(myfile, tmp.diftime);
-				data.push_back(tmp);
+				data_file.push_back(tmp);
 			}
 		}
 	}
@@ -331,45 +387,45 @@ int Processor::WriteAverageFile() {
 	int count_bm = 0, count_sm = 0, count_bl = 0, count_sl = 0;
 	vector<string>groups;
 	vector<string>accounts;
-	for (int i = 0; i < data.size(); i++) {
-		sum += String2Diff(data[i].diftime);
-		if (data[i].order_type == "Buy/MP") {
-			buy_mp += String2Diff(data[i].diftime);
+	for (int i = 0; i < data_file.size(); i++) {
+		sum += String2Diff(data_file[i].diftime);
+		if (data_file[i].order_type == "Buy/MP") {
+			buy_mp += String2Diff(data_file[i].diftime);
 			count_bm++;
 		}
-		else if (data[i].order_type == "Sell/MP") {
-			sell_mp += String2Diff(data[i].diftime);
+		else if (data_file[i].order_type == "Sell/MP") {
+			sell_mp += String2Diff(data_file[i].diftime);
 			count_sm++;
 		}
-		else if (data[i].order_type == "Buy/Limit") {
-			buy_limit += String2Diff(data[i].diftime);
+		else if (data_file[i].order_type == "Buy/Limit") {
+			buy_limit += String2Diff(data_file[i].diftime);
 			count_bl++;
 		}
-		else if (data[i].order_type == "Sell/Limit") {
-			sell_limit += String2Diff(data[i].diftime);
+		else if (data_file[i].order_type == "Sell/Limit") {
+			sell_limit += String2Diff(data_file[i].diftime);
 			count_sl++;
 		}
 		if (groups.size() == 0)
-			groups.push_back(CutStringGroup(data[i].group));
+			groups.push_back(CutStringGroup(data_file[i].group));
 		if (accounts.size() == 0)
-			accounts.push_back(data[i].account);
+			accounts.push_back(data_file[i].account);
 
 		for (int j = 0; j < groups.size(); j++)
-			if (CutStringGroup(data[i].group) == groups[j])
+			if (CutStringGroup(data_file[i].group) == groups[j])
 				break;
 			else if (j + 1 == groups.size())
-				groups.push_back(CutStringGroup(data[i].group));
+				groups.push_back(CutStringGroup(data_file[i].group));
 
 		for (int j = 0; j < accounts.size(); j++)
-			if (data[i].account == accounts[j])
+			if (data_file[i].account == accounts[j])
 				break;
 			else if (j + 1 == accounts.size())
-				accounts.push_back(data[i].account);
+				accounts.push_back(data_file[i].account);
 	}
 
 	// Average of all
 	mywrite << "============================ Average ============================" << "\n";
-	mywrite << "Average: " << Diff2String(sum / data.size()) << "\n";
+	mywrite << "Average: " << Diff2String(sum / data_file.size()) << "\n";
 	mywrite << "- Average(Buy/MP): " << Diff2String(buy_mp / count_bm) << "\n";
 	mywrite << "- Average(Sell/MP): " << Diff2String(sell_mp / count_sm) << "\n";
 	mywrite << "- Average(Buy/Limit): " << Diff2String(buy_limit / count_bl) << "\n";
@@ -380,23 +436,23 @@ int Processor::WriteAverageFile() {
 	for (int i = 0; i < groups.size(); i++) {
 		float sum = 0, buy_mp = 0, sell_mp = 0, buy_limit = 0, sell_limit = 0;
 		int count = 0, count_bm = 0, count_sm = 0, count_bl = 0, count_sl = 0;
-		for (int j = 0; j < data.size(); j++) {
-			if (groups[i] == CutStringGroup(data[j].group)) {
-				sum += String2Diff(data[j].diftime);
-				if (data[j].order_type == "Buy/MP") {
-					buy_mp += String2Diff(data[j].diftime);
+		for (int j = 0; j < data_file.size(); j++) {
+			if (groups[i] == CutStringGroup(data_file[j].group)) {
+				sum += String2Diff(data_file[j].diftime);
+				if (data_file[j].order_type == "Buy/MP") {
+					buy_mp += String2Diff(data_file[j].diftime);
 					count_bm++;
 				}
-				else if (data[j].order_type == "Sell/MP") {
-					sell_mp += String2Diff(data[j].diftime);
+				else if (data_file[j].order_type == "Sell/MP") {
+					sell_mp += String2Diff(data_file[j].diftime);
 					count_sm++;
 				}
-				else if (data[j].order_type == "Buy/Limit") {
-					buy_limit += String2Diff(data[j].diftime);
+				else if (data_file[j].order_type == "Buy/Limit") {
+					buy_limit += String2Diff(data_file[j].diftime);
 					count_bl++;
 				}
-				else if (data[j].order_type == "Sell/Limit") {
-					sell_limit += String2Diff(data[j].diftime);
+				else if (data_file[j].order_type == "Sell/Limit") {
+					sell_limit += String2Diff(data_file[j].diftime);
 					count_sl++;
 				}
 				count++;
@@ -414,23 +470,23 @@ int Processor::WriteAverageFile() {
 	for (int i = 0; i < accounts.size(); i++) {
 		float sum = 0, buy_mp = 0, sell_mp = 0, buy_limit = 0, sell_limit = 0;
 		int count = 0, count_bm = 0, count_sm = 0, count_bl = 0, count_sl = 0;
-		for (int j = 0; j < data.size(); j++) {
-			if (accounts[i] == data[j].account) {
-				sum += String2Diff(data[j].diftime);
-				if (data[j].order_type == "Buy/MP") {
-					buy_mp += String2Diff(data[j].diftime);
+		for (int j = 0; j < data_file.size(); j++) {
+			if (accounts[i] == data_file[j].account) {
+				sum += String2Diff(data_file[j].diftime);
+				if (data_file[j].order_type == "Buy/MP") {
+					buy_mp += String2Diff(data_file[j].diftime);
 					count_bm++;
 				}
-				else if (data[j].order_type == "Sell/MP") {
-					sell_mp += String2Diff(data[j].diftime);
+				else if (data_file[j].order_type == "Sell/MP") {
+					sell_mp += String2Diff(data_file[j].diftime);
 					count_sm++;
 				}
-				else if (data[j].order_type == "Buy/Limit") {
-					buy_limit += String2Diff(data[j].diftime);
+				else if (data_file[j].order_type == "Buy/Limit") {
+					buy_limit += String2Diff(data_file[j].diftime);
 					count_bl++;
 				}
-				else if (data[j].order_type == "Sell/Limit") {
-					sell_limit += String2Diff(data[j].diftime);
+				else if (data_file[j].order_type == "Sell/Limit") {
+					sell_limit += String2Diff(data_file[j].diftime);
 					count_sl++;
 				}
 				count++;
@@ -449,7 +505,7 @@ int Processor::WriteAverageFile() {
 	// Clear memory
 	groups.clear();
 	accounts.clear();
-	data.clear();
+	data_file.clear();
 
 	return 0;
 }
@@ -680,4 +736,51 @@ string Processor::CutStringGroup(string input) {
 		else
 			tmp += input[i];
 	return tmp;
+}
+string Processor::GetIpByName(string hostname)
+{
+	string ans = hostname;
+	WSADATA wsaData;
+	int iResult;
+	DWORD dwError;
+
+	struct hostent* remoteHost;
+	struct in_addr addr;
+
+	iResult = WSAStartup(MAKEWORD(2, 2), &wsaData);
+	if (iResult != 0)
+	{
+		return hostname;
+	}
+
+	remoteHost = gethostbyname(ans.c_str());
+
+	if (remoteHost == NULL)
+	{
+		dwError = WSAGetLastError();
+		if (dwError != 0)
+		{
+			if (dwError == WSAHOST_NOT_FOUND)
+			{
+				return ans;
+			}
+			else if (dwError == WSANO_DATA)
+			{
+				return ans;
+			}
+			else
+			{
+				return ans;
+			}
+		}
+	}
+	else
+	{
+		if (remoteHost->h_addrtype == AF_INET)
+		{
+			addr.s_addr = *(u_long *)remoteHost->h_addr_list[0];
+			ans = inet_ntoa(addr);
+		}
+	}
+	return ans;
 }

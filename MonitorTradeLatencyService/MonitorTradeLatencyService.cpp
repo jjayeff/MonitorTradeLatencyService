@@ -29,7 +29,8 @@ int _tmain(int argc, TCHAR *argv[])
 	string appPath = config.getAbsolutePath();
 	string log_path = appPath + "logs";
 	string result_path = appPath + "results\\";
-	CreateDirectory("results", NULL);
+	string tmp_results_path = appPath + "\\results";
+	CreateDirectory(tmp_results_path.c_str(), NULL);
 
 	config.setValue("Application", "KeyFrontName", "D0118__FIX__MD1");
 	config.setValue("Application", "KeyBackName", "SET");
@@ -40,6 +41,17 @@ int _tmain(int argc, TCHAR *argv[])
 	config.setValue("Application", "Deley", "300");
 	config.setValue("Application", "Account", "D0013__FIX__CU3, D0019__FIX__CU2, D0025__FIX__CU3, D0032__FIX__CU3, D0034__FIX__CU5, D0060__FIX__CU2, D0063__FIX__CU2, D0117__FIX__CU1, D0118__FIX__CU1,");
 
+	config.setValue("Database", "Driver", "SQL Server Native Client 11.0");
+	config.setValue("Database", "Server", "172.17.1.43");
+	config.setValue("Database", "Database", "acc_info");
+	config.setValue("Database", "Username", "sa");
+	config.setValue("Database", "Password", "P@ssw0rd");
+	config.setValue("Database", "LogName", "MonitorTraderLatenceService");
+
+	config.setValue("Email", "From", "infrastructure@toptrader.co.th");
+	config.setValue("Email", "To", "infrastructure@toptrader.co.th");
+	config.setValue("Email", "Template", "tt_monitor_trade_latency_service.html");
+
 	processor.file_path = config.getValueString("Application", "FilePath");
 	processor.result_path = config.getValueString("Application", "ResultPath");
 	processor.key_front_name = config.getValueString("Application", "KeyFrontName");
@@ -47,6 +59,15 @@ int _tmain(int argc, TCHAR *argv[])
 	processor.diff = config.getValueInt("Application", "Diff");
 	processor.deley = config.getValueInt("Application", "Deley");
 	processor.CutString(config.getValueString("Application", "Account"));
+	processor.db_driver = config.getValueString("Database", "Driver");
+	processor.db_server = processor.GetIpByName(config.getValueString("Database", "Server"));
+
+	processor.db_user = config.getValueString("Database", "Username");
+	processor.db_password = config.getValueString("Database", "Password");
+	processor.db_logname = config.getValueString("Database", "LogName");
+	processor.email_from = config.getValueString("Email", "From");
+	processor.email_to = config.getValueString("Email", "To");
+	processor.email_template = config.getValueString("Email", "Template");
 	// init log
 	processor.vnLog.InitialLog(config.getValueString("Application", "LogPath"), "MonitorTradeLatencyService", 10, true);
 
@@ -56,7 +77,7 @@ int _tmain(int argc, TCHAR *argv[])
 	string mon = now->tm_mon < 10 + 1 ? "0" + to_string(now->tm_mon + 1) : to_string(now->tm_mon + 1);
 	string day = now->tm_mday < 10 ? "0" + to_string(now->tm_mday) : to_string(now->tm_mday);
 	string date = to_string(now->tm_year + 1900) + mon + day;
-	string tmp_path = "results\\MonitorTradeLatencyService" + date + "\\";
+	string tmp_path = appPath + "\\results\\MonitorTradeLatencyService" + date + "\\";
 	CreateDirectory(tmp_path.c_str(), NULL);
 	ofstream mywrite(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv");
 	ofstream mywrite1(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Sub.csv");
