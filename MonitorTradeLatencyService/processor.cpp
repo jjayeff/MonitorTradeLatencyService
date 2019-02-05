@@ -240,7 +240,7 @@ int Processor::ReadFile(string input, vector<File> *value, int index) {
 //| Find Field B2bits                                                |
 //+------------------------------------------------------------------+
 int Processor::FindField(string line, char* input) {
-	char *tmp = new char[line.size() + 1];
+	char *tmp = &line[0u];
 	copy(line.begin(), line.end(), tmp);
 	char *result = strstr(tmp, input);
 	int position = result - tmp;
@@ -598,9 +598,9 @@ int Processor::SetFrontBackName() {
 	string max_string = "";
 	double max = -999999;
 
-	char *cstr_front_name = new char[key_front_name.length()];
+	char *cstr_front_name = &key_front_name[0u];
 	strcpy(cstr_front_name, key_front_name.c_str());
-	char *cstr_back_name = new char[key_back_name.length()];
+	char *cstr_back_name = &key_back_name[0u];
 	strcpy(cstr_back_name, key_back_name.c_str());
 	for (const auto & entry : fs::directory_iterator(path)) {
 		ostringstream oss;
@@ -614,7 +614,7 @@ int Processor::SetFrontBackName() {
 			&& (path.substr(path.size() - 7, 7) != ".ndx.in" && path.substr(path.size() - 8, 8) != ".ndx.out")
 			) {
 			// Get Modified time
-			char *tmp = new char[path.length()];
+			char *tmp = &path[0u];
 			strcpy(tmp, path.c_str());
 			struct stat fileInfo;
 			if (stat(tmp, &fileInfo) != 0) {  // Use stat( ) to get the info
@@ -658,9 +658,9 @@ int Processor::SetFrontBackName(string key_front, string key_back) {
 	string max_string = "";
 	double max = -999999;
 
-	char *cstr_front_name = new char[key_front.length()];
+	char *cstr_front_name = &key_front[0u];
 	strcpy(cstr_front_name, key_front.c_str());
-	char *cstr_back_name = new char[key_back.length()];
+	char *cstr_back_name = &key_back[0u];
 	strcpy(cstr_back_name, key_back.c_str());
 	for (const auto & entry : fs::directory_iterator(path)) {
 		ostringstream oss;
@@ -674,7 +674,7 @@ int Processor::SetFrontBackName(string key_front, string key_back) {
 			&& (path.substr(path.size() - 7, 7) != ".ndx.in" && path.substr(path.size() - 8, 8) != ".ndx.out")
 			) {
 			// Get Modified time
-			char *tmp = new char[path.length()];
+			char *tmp = &path[0u];
 			strcpy(tmp, path.c_str());
 			struct stat fileInfo;
 			if (stat(tmp, &fileInfo) != 0) {  // Use stat( ) to get the info
