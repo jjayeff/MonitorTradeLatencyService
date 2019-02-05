@@ -44,6 +44,7 @@ public:
 	string				key_back_name = "";
 	string				file_path = "";
 	string				result_path = "";
+	string				tmp_results_path = "";
 	string				db_driver = "";
 	string				db_server = "";
 	string				db_database = "";

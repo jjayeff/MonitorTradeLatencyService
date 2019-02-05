@@ -29,8 +29,7 @@ int _tmain(int argc, TCHAR *argv[])
 	string appPath = config.getAbsolutePath();
 	string log_path = appPath + "logs";
 	string result_path = appPath + "results\\";
-	string tmp_results_path = appPath + "\\results";
-	CreateDirectory(tmp_results_path.c_str(), NULL);
+	processor.tmp_results_path = appPath + "\\results";
 
 	config.setValue("Application", "KeyFrontName", "D0118__FIX__MD1");
 	config.setValue("Application", "KeyBackName", "SET");
@@ -70,19 +69,7 @@ int _tmain(int argc, TCHAR *argv[])
 	processor.email_template = config.getValueString("Email", "Template");
 	// init log
 	processor.vnLog.InitialLog(config.getValueString("Application", "LogPath"), "MonitorTradeLatencyService", 10, true);
-
 	//----------------------------------------------------------------------
-	time_t t = time(0);   // get time now
-	tm* now = localtime(&t);
-	string mon = now->tm_mon < 10 + 1 ? "0" + to_string(now->tm_mon + 1) : to_string(now->tm_mon + 1);
-	string day = now->tm_mday < 10 ? "0" + to_string(now->tm_mday) : to_string(now->tm_mday);
-	string date = to_string(now->tm_year + 1900) + mon + day;
-	string tmp_path = appPath + "\\results\\MonitorTradeLatencyService" + date + "\\";
-	CreateDirectory(tmp_path.c_str(), NULL);
-	ofstream mywrite(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv");
-	ofstream mywrite1(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Sub.csv");
-	mywrite.close();
-	mywrite1.close();
 
 	/*while (1) {
 		processor.Run();

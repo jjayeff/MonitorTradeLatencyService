@@ -16,6 +16,19 @@ Processor::~Processor() {
 //| Run Program                                                      |
 //+------------------------------------------------------------------+
 int Processor::Run() {
+	CreateDirectory(tmp_results_path.c_str(), NULL);
+	time_t t = time(0);   // get time now
+	tm* now = localtime(&t);
+	string mon = now->tm_mon < 10 + 1 ? "0" + to_string(now->tm_mon + 1) : to_string(now->tm_mon + 1);
+	string day = now->tm_mday < 10 ? "0" + to_string(now->tm_mday) : to_string(now->tm_mday);
+	string date = to_string(now->tm_year + 1900) + mon + day;
+	string tmp_path = tmp_results_path + "\\MonitorTradeLatencyService" + date + "\\";
+	CreateDirectory(tmp_path.c_str(), NULL);
+	ofstream mywrite(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv");
+	ofstream mywrite1(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Sub.csv");
+	mywrite.close();
+	mywrite1.close();
+
 	if (!SetFrontBackName()) {
 		string file = file_path + front_name + "-" + back_name;
 		LOGI << "Read file name: " + front_name + "-" + back_name;
@@ -315,21 +328,6 @@ int Processor::WriteFile() {
 						T6 = stof(DiffTime(MF_in[j].sending_time, MF_in[j].log_time));
 						T7 = stof(DiffTime(MF_in[j].log_time, FS_in.log_time));
 						TALL = stof(DiffTime(FS_in.log_time, FS_out.log_time));
-						/*cout << "*******************************" << endl;
-						cout << "MF_in: " << MF_out[i].log_time << " | " << MF_out[i].sending_time << " | " << MF_out[i].transact_time << endl;
-						cout << "FS_out: " << FS_out.log_time << " | " << FS_out.sending_time << " | " << FS_out.transact_time << endl;
-						cout << "FS_in: " << FS_in.log_time << " | " << FS_in.sending_time << " | " << FS_in.transact_time << endl;
-						cout << "MF_out: " << MF_in[j].log_time << " | " << MF_in[j].sending_time << " | " << MF_in[j].transact_time << endl;
-						cout << "=====================================" << endl;
-						cout << "T1: (" << FS_out.log_time << " - " << MF_out[i].log_time << ") = " << T1 << endl;
-						cout << "T2: (" << FS_out.sending_time << " - " << FS_out.log_time << ") = " << T2 << endl;
-						cout << "TALL: (" << FS_in.log_time << " - " << FS_out.log_time << ") = " << TALL << endl;
-						cout << "- T3: (" << MF_in[j].transact_time << " - (" << FS_out.sending_time << " + " << FS_diff << ")) = " << T3 << endl;
-						cout << "- T4: (" << FS_in.sending_time << " - " << MF_in[j].transact_time << ") = " << T4 << endl;
-						cout << "- T5: ((" << FS_in.log_time << " + " << FS_diff << ") - " << FS_in.sending_time << ") = " << T5 << endl;
-						cout << "TALL: (" << TALL << " SUM: " << T3 + T4 + T5 << ")" << endl;
-						cout << "T6: (" << MF_in[j].sending_time << " - " << FS_in.log_time << ") = " << T6 << endl;
-						cout << "T7: (" << MF_in[j].log_time << " - " << FS_in.log_time << ") = " << T7 << endl;*/
 						mywrite1 << tmp.id << "," << Diff2String(T1) << "," << Diff2String(T2) << "," << Diff2String(T3) << "," << Diff2String(T4) << "," << Diff2String(T5) << "," << Diff2String(T6) << "," << Diff2String(T7) << "\n";
 						mywrite << tmp.order_type << "," << tmp.account << "," << tmp.group << "," << tmp.id << "," << Diff2String(stof(tmp.diftime)) << "," << "\n";
 						if (diff < stof(tmp.diftime)) {
