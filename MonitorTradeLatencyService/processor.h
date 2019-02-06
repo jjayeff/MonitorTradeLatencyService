@@ -45,6 +45,7 @@ public:
 	string				file_path = "";
 	string				result_path = "";
 	string				tmp_results_path = "";
+	string				date_config = "";
 	string				db_driver = "";
 	string				db_server = "";
 	string				db_database = "";
@@ -84,6 +85,7 @@ public:
 	int					CutString(string input);
 	string				CutStringGroup(string input);
 	string				GetIpByName(string hostname);
+	void				writeConfig(LPCTSTR path, LPCTSTR key, string value);
 
 private:
 };

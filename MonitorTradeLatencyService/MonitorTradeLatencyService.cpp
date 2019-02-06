@@ -39,6 +39,7 @@ int _tmain(int argc, TCHAR *argv[])
 	config.setValue("Application", "Diff", "1");
 	config.setValue("Application", "Deley", "300");
 	config.setValue("Application", "Account", "D0013__FIX__CU3, D0019__FIX__CU2, D0025__FIX__CU3, D0032__FIX__CU3, D0034__FIX__CU5, D0060__FIX__CU2, D0063__FIX__CU2, D0117__FIX__CU1, D0118__FIX__CU1,");
+	config.setValue("Application", "Date", "20190205");
 
 	config.setValue("Database", "Driver", "SQL Server Native Client 11.0");
 	config.setValue("Database", "Server", "172.17.1.43");
@@ -58,6 +59,7 @@ int _tmain(int argc, TCHAR *argv[])
 	processor.diff = config.getValueInt("Application", "Diff");
 	processor.deley = config.getValueInt("Application", "Deley");
 	processor.CutString(config.getValueString("Application", "Account"));
+	processor.date_config = config.getValueInt("Application", "Date");
 	processor.db_driver = config.getValueString("Database", "Driver");
 	processor.db_server = processor.GetIpByName(config.getValueString("Database", "Server"));
 

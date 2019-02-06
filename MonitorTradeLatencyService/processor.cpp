@@ -22,12 +22,16 @@ int Processor::Run() {
 	string mon = now->tm_mon < 10 + 1 ? "0" + to_string(now->tm_mon + 1) : to_string(now->tm_mon + 1);
 	string day = now->tm_mday < 10 ? "0" + to_string(now->tm_mday) : to_string(now->tm_mday);
 	string date = to_string(now->tm_year + 1900) + mon + day;
-	string tmp_path = tmp_results_path + "\\MonitorTradeLatencyService" + date + "\\";
-	CreateDirectory(tmp_path.c_str(), NULL);
-	ofstream mywrite(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv");
-	ofstream mywrite1(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Sub.csv");
-	mywrite.close();
-	mywrite1.close();
+	if (date_config != date) {
+		string tmp_path = tmp_results_path + "\\MonitorTradeLatencyService" + date + "\\";
+		CreateDirectory(tmp_path.c_str(), NULL);
+		ofstream mywrite(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + ".csv");
+		ofstream mywrite1(processor.result_path + "MonitorTradeLatencyService" + date + "\\" + "MonitorTradeLatencyService_" + date + "_Sub.csv");
+		mywrite.close();
+		mywrite1.close();
+		date_config = date;
+		writeConfig(".\\MonitorTradeLatencyService.ini", "Date", date);
+	}
 
 	if (!SetFrontBackName()) {
 		string file = file_path + front_name + "-" + back_name;
@@ -781,4 +785,8 @@ string Processor::GetIpByName(string hostname)
 		}
 	}
 	return ans;
+}
+void Processor::writeConfig(LPCTSTR path, LPCTSTR key, string value) {
+	LPCTSTR result = value.c_str();
+	WritePrivateProfileString(_T("Application"), key, result, path);
 }
