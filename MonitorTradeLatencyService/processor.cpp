@@ -31,6 +31,13 @@ int Processor::Run() {
 		mywrite1.close();
 		date_config = date;
 		writeConfig(".\\MonitorTradeLatencyService.ini", "Date", date);
+		// Clear Memory
+		for (auto &x : out_acc_file)
+			x.clear();
+		for (auto &x : in_acc_file)
+			x.clear();
+		MF_out.clear();
+		MF_in.clear();
 	}
 
 	if (!SetFrontBackName()) {
